@@ -12,3 +12,6 @@ yarn-error.log*
 next-env.d.ts
 .vercel
 *.tsbuildinfo
+.neon
+
+/src/generated/prisma

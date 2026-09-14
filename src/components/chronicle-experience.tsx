@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, Check, ChevronDown, Compass, Download, Heart, Leaf, Menu, Shield, Sparkles, Swords, Users, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ChevronDown, Compass, Download, Heart, Leaf, Menu, Shield, Sparkles, Swords, Users, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { chronicle } from "@/i18n/chronicle";
+import { profileText } from "@/i18n/profile";
 import { Button } from "./ui/button";
 
 const companions = [
@@ -19,8 +20,6 @@ export function ChronicleExperience({ locale }: { locale: Locale }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [active, setActive] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
-  const [formError, setFormError] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState("");
   const root = useRef<HTMLDivElement>(null);
   const companion = companions[active];
@@ -38,19 +37,6 @@ export function ChronicleExperience({ locale }: { locale: Locale }) {
     root.current?.querySelectorAll("[data-reveal]").forEach((element) => observer.observe(element));
     return () => observer.disconnect();
   }, []);
-
-  function submitPreview(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    if (!form.checkValidity()) {
-      setFormError(true);
-      form.querySelector<HTMLInputElement>("input[type=email]")?.focus();
-      return;
-    }
-    setFormError(false);
-    form.reset();
-    setSubmitted(true);
-  }
 
   async function downloadCard() {
     try {
@@ -119,10 +105,10 @@ export function ChronicleExperience({ locale }: { locale: Locale }) {
           <div className="language-switch" aria-label="Language">
             {(["en", "de"] as const).map((language) => <Link key={language} href={`/${language}`} hrefLang={language} aria-current={locale === language ? "page" : undefined}>{language.toUpperCase()}</Link>)}
           </div>
-          <Button asChild className="header-cta"><a href="#waitlist">{text.access}<ArrowRight size={14} /></a></Button>
+          <Button asChild className="header-cta"><Link href={`/${locale}/profile`}>{profileText[locale].login}<ArrowRight size={14} /></Link></Button>
           <button className="mobile-menu icon-button" aria-label={locale === "de" ? (menuOpen ? "Menü schließen" : "Menü öffnen") : (menuOpen ? "Close menu" : "Open menu")} aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
         </div>
-        {menuOpen && <nav id="mobile-navigation" className="mobile-navigation">{text.nav.map((label, index) => <a key={label} href={["#discovery", "#connections", "#journey"][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<a href="#waitlist" onClick={() => setMenuOpen(false)}>{text.access}</a></nav>}
+        {menuOpen && <nav id="mobile-navigation" className="mobile-navigation">{text.nav.map((label, index) => <a key={label} href={["#discovery", "#connections", "#journey"][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<Link href={`/${locale}/profile`}>{profileText[locale].login}</Link></nav>}
       </header>
 
       <main>
@@ -136,7 +122,7 @@ export function ChronicleExperience({ locale }: { locale: Locale }) {
             <div className="ornament" aria-hidden="true"><span /><Heart size={17} /><span /></div>
             <h2>{text.subtitle}</h2>
             <p className="hero-intro">{text.intro}</p>
-            <Button asChild><a href="#match"><Compass size={18} />{text.heroCta}<ArrowRight size={17} /></a></Button>
+            <Button asChild><Link href={`/${locale}/profile`}><Shield size={18} />{profileText[locale].login}<ArrowRight size={17} /></Link></Button>
             <p className="hero-note">{text.heroNote}</p>
           </div>
           <div className="hero-bottom"><span>{text.launch}<strong>{text.date}</strong></span><a href="#discovery" className="scroll-cue"><span>{text.scroll}</span><ArrowDown size={18} /></a><span className="hero-bottom-end"><span className="status-dot" />{text.concept}</span></div>
@@ -194,7 +180,7 @@ export function ChronicleExperience({ locale }: { locale: Locale }) {
 
         <section id="waitlist" className="waitlist-section section-space">
           <div className="quest-marker" aria-hidden="true">!</div><div className="section-heading" data-reveal><p className="eyebrow">{text.waitChapter}</p><h2>{text.waitTitle}<br /><em>{text.waitAccent}</em></h2><p>{text.waitBody}</p></div>
-          <div className="waitlist-content">{submitted ? <div className="quest-complete" role="status"><Check size={30} /><h3>{text.success}</h3><p>{text.successBody}</p><Button className="secondary-button" onClick={() => setSubmitted(false)}>{text.reset}</Button></div> : <form onSubmit={submitPreview} noValidate><fieldset className="role-selection"><legend>{text.roleQuestion}</legend>{text.roleOptions.map((role, index) => { const RoleIcon = [Shield, Leaf, Swords][index]; return <label key={role}><input type="radio" name="role" value={role} defaultChecked={index === 0} /><span><RoleIcon size={18} />{role}</span></label>; })}</fieldset><label className="email-label" htmlFor="preview-email">{text.email}</label><div className="email-row"><input id="preview-email" name="email" type="email" required autoComplete="email" placeholder={text.emailPlaceholder} aria-invalid={formError || undefined} aria-describedby={formError ? "email-error preview-notice" : "preview-notice"} onChange={() => setFormError(false)} /><Button type="submit">{text.submit}<ArrowRight size={17} /></Button></div>{formError && <p id="email-error" className="form-error" role="alert">{text.emailError}</p>}<p className="fine-print" id="preview-notice">{text.demoNotice}</p></form>}</div>
+          <div className="waitlist-content"><Button asChild><Link href={`/${locale}/profile`}><Shield size={18} />{profileText[locale].login}</Link></Button><p className="fine-print">{profileText[locale].loginBody}</p></div>
         </section>
 
         <section className="faq-section section-width"><h2>{text.faqTitle}</h2><div>{text.faqs.map(([question, answer]) => <details key={question}><summary>{question}<ChevronDown size={18} /></summary><p>{answer}</p></details>)}</div></section>
