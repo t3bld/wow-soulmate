@@ -24,6 +24,6 @@ The project is zero-config on Vercel; [vercel.json](vercel.json) pins the framew
 
 1. Import `t3bld/wow-soulmate` at https://vercel.com/new.
 2. Keep the detected settings (build: `next build`, install: `npm install`).
-3. Optionally set `NEXT_PUBLIC_SITE_URL` to the production domain so absolute Open Graph URLs resolve to it; otherwise the Vercel-provided production URL is used.
+3. Set `APP_URL` to the production origin (for example `https://www.wowsoulmate.com`). It is the redirect target for the Battle.net login and the base for absolute Open Graph URLs; without it the Vercel-provided production URL is used for metadata and the login stays disabled.
 
 Pushes to `main` deploy to production, every other branch gets a preview deployment.

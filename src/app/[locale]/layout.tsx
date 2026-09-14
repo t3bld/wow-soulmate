@@ -18,7 +18,7 @@ export function generateStaticParams() {
 }
 
 function getSiteUrl() {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  const explicit = process.env.APP_URL;
   if (explicit) return new URL(explicit);
 
   const vercelUrl =
