@@ -1,0 +1,1 @@
+ALTER TABLE "soulmate_profiles" ADD COLUMN "about" VARCHAR(1000) NOT NULL DEFAULT '';

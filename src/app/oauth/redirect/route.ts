@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as oidc from "openid-client";
 import { authClient, authSettings, identitySession, loginTransaction } from "@/lib/auth";
+import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
-  let locale = "en";
+  let locale: Locale = defaultLocale;
   try {
     const settings = authSettings();
     const transaction = await loginTransaction();
     const { state, nonce, verifier, createdAt } = transaction;
-    locale = transaction.locale === "de" ? "de" : "en";
+    const requestedLocale = transaction.locale ?? "";
+    locale = isLocale(requestedLocale) ? requestedLocale : defaultLocale;
     transaction.destroy();
     if (!state || !nonce || !verifier || !createdAt || Date.now() - createdAt > 600000 || createdAt > Date.now()) throw new Error("Expired transaction");
     if (request.nextUrl.searchParams.get("state") !== state) throw new Error("Invalid state");

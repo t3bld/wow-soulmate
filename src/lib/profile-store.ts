@@ -1,7 +1,7 @@
 import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
-import { profileSchema, type PlayerProfile, type PublicProfile } from "./profile";
+import { matchmakingSchema, profilePlaytimes, profileSchema, type PlayerProfile, type PublicProfile } from "./profile";
 
 const globalDatabase = globalThis as typeof globalThis & { soulmatePrisma?: PrismaClient };
 
@@ -18,7 +18,9 @@ export async function getProfile(subject: string): Promise<PlayerProfile | null>
 }
 
 export async function saveProfile(subject: string, profile: PlayerProfile) {
-  const data = profileSchema.parse(profile);
+  const parsed = profileSchema.parse(profile);
+  const playtimes = profilePlaytimes(parsed);
+  const data = { ...parsed, ...playtimes[0], playtimes, matchmaking: parsed.matchmaking ?? matchmakingSchema.parse({}) };
   await database().profile.upsert({ where: { subject }, create: { subject, ...data }, update: data });
 }
 

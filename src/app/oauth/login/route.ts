@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as oidc from "openid-client";
 import { authClient, authSettings, loginTransaction } from "@/lib/auth";
+import { defaultLocale, isLocale } from "@/i18n/config";
+import { profileText } from "@/i18n/profile";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
-  const locale = request.nextUrl.searchParams.get("locale") === "de" ? "de" : "en";
+  const requestedLocale = request.nextUrl.searchParams.get("locale") ?? "";
+  const locale = isLocale(requestedLocale) ? requestedLocale : defaultLocale;
   try {
     const config = await authClient();
     const transaction = await loginTransaction();
@@ -22,6 +25,6 @@ export async function GET(request: NextRequest) {
     await transaction.save();
     return NextResponse.redirect(url, { headers: { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
   } catch {
-    return new NextResponse(locale === "de" ? "Battle.net-Login ist noch nicht eingerichtet oder derzeit nicht erreichbar. Bitte kehre zur Website zurück." : "Battle.net login is not configured or is temporarily unavailable. Please return to the website.", { status: 503, headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" } });
+    return new NextResponse(profileText[locale].notReady, { status: 503, headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" } });
   }
 }

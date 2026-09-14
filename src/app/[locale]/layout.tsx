@@ -5,7 +5,7 @@ import "../chronicle.css";
 import { isLocale, locales, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-sans", display: "swap" });
 const cinzel = Cinzel({
   subsets: ["latin"],
   weight: ["600", "700", "800"],

@@ -31,39 +31,29 @@ export function Countdown({ dict }: { dict: Dictionary }) {
     return () => clearInterval(id);
   }, []);
 
-  if (!mounted) return <div className="mt-10 h-[5.5rem]" aria-hidden />;
-
-  if (!remaining) {
-    return <p className="mt-10 text-sm font-semibold text-soul-200">{dict.countdown.live}</p>;
-  }
-
   const units = [
-    { value: remaining.days, label: dict.countdown.days },
-    { value: remaining.hours, label: dict.countdown.hours },
-    { value: remaining.minutes, label: dict.countdown.minutes },
-    { value: remaining.seconds, label: dict.countdown.seconds },
+    { value: remaining?.days, label: dict.countdown.days },
+    { value: remaining?.hours, label: dict.countdown.hours },
+    { value: remaining?.minutes, label: dict.countdown.minutes },
+    { value: remaining?.seconds, label: dict.countdown.seconds },
   ];
 
   return (
-    <div className="mt-10">
-      <p className="text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-muted/70">
-        {dict.countdown.label}
-      </p>
-      <div className="mt-3 flex gap-2.5">
+    <section className="launch-countdown" aria-label={dict.countdown.label}>
+      <div className="launch-countdown-inner">
+      <div className="launch-countdown-heading">
+        <img src="https://blz-contentstack-images.akamaized.net/v3/assets/blt9c12f249ac15c7ec/bltee571c6de7ccbaf6/6a95adbf1deff31d75439029/camelot-icon.png" alt="" width={48} height={54} />
+        <h2 aria-live="polite">{mounted && !remaining ? dict.countdown.live : dict.countdown.announcement}</h2>
+      </div>
+      <div className="launch-countdown-units" role="timer" aria-live="off" aria-label={dict.countdown.label}>
         {units.map((unit) => (
-          <div
-            key={unit.label}
-            className="soul-card min-w-[4.2rem] rounded-xl px-3 py-2.5 text-center"
-          >
-            <div className="font-[family-name:var(--font-display)] text-xl font-bold tabular-nums text-ink">
-              {String(unit.value).padStart(2, "0")}
-            </div>
-            <div className="mt-0.5 text-[0.6rem] tracking-[0.1em] uppercase text-muted">
-              {unit.label}
-            </div>
+          <div key={unit.label} className="launch-countdown-unit">
+            <span className="launch-countdown-value">{mounted ? String(unit.value ?? 0).padStart(2, "0") : "--"}</span>
+            <span className="launch-countdown-label">{unit.label}</span>
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </section>
   );
 }

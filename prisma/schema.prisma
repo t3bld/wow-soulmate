@@ -17,6 +17,7 @@ model Profile {
   id           String   @id @default(uuid()) @db.Uuid
   subject      String   @unique
   alias        String
+  about        String   @default("") @db.VarChar(1000)
   region       String
   language     String
   role         String
@@ -27,6 +28,8 @@ model Profile {
   days         Int[]
   startHour    Int      @map("start_hour")
   endHour      Int      @map("end_hour")
+  playtimes    Json?
+  matchmaking  Json?
   adult        Boolean
   discoverable Boolean  @default(false)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
