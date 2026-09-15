@@ -1,0 +1,1 @@
+ALTER TABLE "soulmate_profiles" DROP COLUMN "addon_interest";

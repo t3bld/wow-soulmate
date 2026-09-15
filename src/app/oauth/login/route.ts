@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     transaction.createdAt = Date.now();
     transaction.locale = locale;
     const url = oidc.buildAuthorizationUrl(config, {
-      scope: "openid", redirect_uri: authSettings().redirectUri,
+      scope: "openid wow.profile", redirect_uri: authSettings().redirectUri,
       state: transaction.state, nonce: transaction.nonce,
       code_challenge: await oidc.calculatePKCECodeChallenge(transaction.verifier), code_challenge_method: "S256",
     });

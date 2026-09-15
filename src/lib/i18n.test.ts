@@ -3,8 +3,10 @@ import { test } from "node:test";
 import { locales, isLocale, nativeLocaleNames } from "../i18n/config";
 import { chronicle, compatibilityText } from "../i18n/chronicle";
 import { legalText } from "../i18n/legal";
-import { profileText, questionnaireText } from "../i18n/profile";
+import { addonText } from "../i18n/addon";
+import { matchingText, profileOverviewText, profileText, questionnaireText, roleSelectionText } from "../i18n/profile";
 import { getDictionary } from "../i18n/get-dictionary";
+import { activities, classes, experiences } from "./profile";
 
 function checkShape(reference: unknown, actual: unknown, path: string) {
   if (typeof reference === "string") {
@@ -31,8 +33,13 @@ test("all European locales have complete active translations", () => {
     checkShape(chronicle.en, chronicle[locale], `${locale}.chronicle`);
     checkShape(compatibilityText.en, compatibilityText[locale], `${locale}.compatibility`);
     checkShape(profileText.en, profileText[locale], `${locale}.profile`);
+    checkShape(roleSelectionText.en, roleSelectionText[locale], `${locale}.roleSelection`);
+    checkShape(profileOverviewText.en, profileOverviewText[locale], `${locale}.profileOverview`);
+    checkShape(matchingText.en, matchingText[locale], `${locale}.matching`);
+    assert.equal(matchingText[locale].title, "Soulmates");
     checkShape(questionnaireText.en, questionnaireText[locale], `${locale}.questionnaire`);
     checkShape(legalText.en, legalText[locale], `${locale}.legal`);
+    checkShape(addonText.en, addonText[locale], `${locale}.addon`);
     checkShape(getDictionary("en").meta, getDictionary(locale).meta, `${locale}.meta`);
     checkShape(getDictionary("en").countdown, getDictionary(locale).countdown, `${locale}.countdown`);
     if (locale !== "en") {
@@ -43,4 +50,46 @@ test("all European locales have complete active translations", () => {
     }
   }
   for (const invalid of ["", "xx", "fr/profile", "EN", "../de"]) assert.equal(isLocale(invalid), false);
+});
+
+test("Classic questionnaire labels are complete with the requested optional about label", () => {
+  for (const locale of locales) {
+    const text = profileText[locale];
+    const questionnaire = questionnaireText[locale];
+    for (const activity of activities) assert.ok(text.names[activity], `${locale}.${activity}`);
+    for (const experience of experiences) assert.ok(text.names[experience], `${locale}.${experience}`);
+    for (const playerClass of classes) assert.ok(questionnaire.classesNames[playerClass], `${locale}.${playerClass}`);
+    assert.match(text.about, / \([^()]+\)$/);
+    for (const label of [text.ageGroup, questionnaire.classes, questionnaire.factions, questionnaire.goals, questionnaire.preferredClasses]) {
+      assert.doesNotMatch(label, /\([^)]*\)/, `${locale}.${label}`);
+    }
+    assert.equal(new Set([text.names.exploration, text.names.questing, text.names.story]).size, 3);
+  }
+  assert.equal(profileText.en.about, "About you and what you are looking for (optional)");
+  assert.equal(profileText.de.about, "Über dich und deine Wünsche (optional)");
+  assert.equal(profileText.de.ageGroup, "Altersgruppe");
+  assert.equal(profileText.de.names.original, "Seit WoW-Release dabei");
+  assert.equal(roleSelectionText.de.label, "Deine Rollen");
+  assert.equal(profileText.de.discoverable, "Ich möchte am Matching teilnehmen. Angemeldete Teilnehmer mit sichtbarem Profil sehen meinen Alias, Rolle, Erfahrung, gemeinsame Aktivitäten, überschneidende Stunden und weitere relevante Informationen.");
+  assert.deepEqual([profileText.de.names.relaxation, profileText.de.names.professions], ["Entspannung", "Berufe"]);
+  assert.deepEqual([profileText.de.names.exploration, profileText.de.names.questing, profileText.de.names.story], ["Erkundung", "Quests", "Story"]);
+});
+
+test("profile wording follows the German and English baseline in every locale", () => {
+  const expected = {
+    en: ["Your profile", "Public alias", "optional", "Your Soulmates"],
+    de: ["Dein Profil", "Benutzername", "optional", "Deine Soulmates"],
+    fr: ["Ton profil", "Pseudonyme public", "facultatif", "Tes Soulmates"],
+    es: ["Tu perfil", "Alias público", "opcional", "Tus Soulmates"],
+    it: ["Il tuo profilo", "Alias pubblico", "facoltativo", "I tuoi Soulmates"],
+    pt: ["O teu perfil", "Nome público", "opcional", "Os teus Soulmates"],
+    ru: ["Твой профиль", "Публичный псевдоним", "необязательно", "Твои Soulmates"],
+  };
+  for (const locale of locales) {
+    const [title, alias, optional, heading] = expected[locale];
+    assert.equal(profileText[locale].title, title, `${locale}.title`);
+    assert.equal(profileText[locale].alias, alias, `${locale}.alias`);
+    assert.ok(profileText[locale].about.endsWith(` (${optional})`), `${locale}.about`);
+    assert.equal(matchingText[locale].heading, heading, `${locale}.heading`);
+  }
 });

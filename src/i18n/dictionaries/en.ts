@@ -24,7 +24,8 @@ export const en = {
     trust: "No spam. One mail when we launch. Unsubscribe anytime.",
   },
   countdown: {
-    announcement: "Launches November 4!",
+    locale: "en",
+    announcement: "Launches {date}!",
     label: "WoW: Forever launches in",
     days: "days",
     hours: "hrs",

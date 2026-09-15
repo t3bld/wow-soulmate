@@ -26,7 +26,8 @@ export const de: Dictionary = {
     trust: "Kein Spam. Eine Mail zum Launch. Jederzeit abbestellbar.",
   },
   countdown: {
-    announcement: "Erscheint am 4. November!",
+    locale: "de",
+    announcement: "Erscheint am {date}!",
     label: "WoW: Forever startet in",
     days: "Tage",
     hours: "Std",

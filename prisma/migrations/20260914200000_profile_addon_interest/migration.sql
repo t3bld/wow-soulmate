@@ -1,0 +1,1 @@
+ALTER TABLE "soulmate_profiles" ADD COLUMN "addon_interest" BOOLEAN;

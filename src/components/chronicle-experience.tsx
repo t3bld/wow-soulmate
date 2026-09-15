@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import Link from "next/link";
-import { ArrowDown, ArrowRight, ChevronDown, Clock3, Compass, Globe2, GraduationCap, Heart, Leaf, Menu, Shield, Sparkles, Swords, Users, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ChevronDown, Clock3, Compass, Globe2, GraduationCap, Heart, Leaf, Shield, Sparkles, Swords, Users } from "lucide-react";
 import { nativeLocaleNames, type Locale } from "@/i18n/config";
 import { chronicle, compatibilityText } from "@/i18n/chronicle";
 import { WorldFooter } from "./world-footer";
-import { LocaleSwitcher } from "./locale-switcher";
+import { WorldHeader } from "./world-header";
 import { profileText } from "@/i18n/profile";
 import { Button } from "./ui/button";
 import { Countdown } from "./countdown";
+import { WarlockPortal } from "./warlock-portal";
 import { getDictionary } from "@/i18n/get-dictionary";
 
 const companions = [
@@ -45,22 +45,10 @@ function CompatibilityDetails({ player, locale }: { player: (typeof companions)[
 
 export function ChronicleExperience({ locale }: { locale: Locale }) {
   const text = chronicle[locale];
-  const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const [signedIn, setSignedIn] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const companion = companions[active];
-  const accessHref = signedIn ? `/${locale}/profile` : `/oauth/login?locale=${locale}`;
-  const accessLabel = signedIn ? profileText[locale].toProfile : profileText[locale].login;
-
-  useEffect(() => {
-    const request = new AbortController();
-    fetch("/api/session", { signal: request.signal, headers: { Accept: "application/json" } })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((session) => setSignedIn(session?.signedIn === true))
-      .catch(() => undefined);
-    return () => request.abort();
-  }, []);
+  const accessHref = `/oauth/login?locale=${locale}`;
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -78,18 +66,7 @@ export function ChronicleExperience({ locale }: { locale: Locale }) {
   return (
     <div className="chronicle" ref={root}>
       <a className="skip-link" href="#discovery">{text.skip}</a>
-      <header className="world-header">
-        <Link className="wordmark" href={`/${locale}`} aria-label="WoW Soulmate">
-          <img className="nav-logo" src="https://blz-contentstack-images.akamaized.net/v3/assets/blt9c12f249ac15c7ec/bltee571c6de7ccbaf6/6a95adbf1deff31d75439029/camelot-icon.png" alt="" width={928} height={1039} />
-          <span className="nav-logo-word">Soulmate</span>
-        </Link>
-        <div className="header-actions">
-          <LocaleSwitcher current={locale} />
-          <Button asChild className="header-cta"><a href={accessHref}>{accessLabel}<ArrowRight size={14} /></a></Button>
-          <button className="mobile-menu icon-button" aria-label={menuOpen ? text.closeMenu : text.openMenu} aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
-        </div>
-        {menuOpen && <nav id="mobile-navigation" className="mobile-navigation"><a href={accessHref}>{accessLabel}</a></nav>}
-      </header>
+      <WorldHeader locale={locale} />
 
       <main>
         <section className="world-hero" aria-labelledby="hero-title">
@@ -102,8 +79,11 @@ export function ChronicleExperience({ locale }: { locale: Locale }) {
             <h1 id="hero-title"><img className="hero-logo" src="/images/soulmate-logo.png" alt="WoW Soulmate" width={559} height={452} /></h1>
             <h2>{text.subtitle}</h2>
             <p className="hero-intro">{text.intro}</p>
-            <Button asChild><a href={accessHref}>{signedIn ? profileText[locale].toProfile : profileText[locale].login2}<ArrowRight size={17} /></a></Button>
+            <Button asChild><a href={accessHref}>{profileText[locale].login2}<ArrowRight size={17} /></a></Button>
             {text.heroNote && <p className="hero-note">{text.heroNote}</p>}
+          </div>
+          <div className="hero-hunter" aria-hidden="true" data-reveal>
+            <img src="/images/hunter-profile.png" alt="" width={500} height={500} decoding="async" />
           </div>
           <Countdown dict={getDictionary(locale)} />
         </section>
@@ -157,9 +137,15 @@ export function ChronicleExperience({ locale }: { locale: Locale }) {
           <ol className="quest-steps" data-reveal>{text.how.map(([title, description], index) => { const StepIcon = [Compass, Users, Swords][index]; return <li key={title}><span className="step-number">0{index + 1}</span><StepIcon size={29} strokeWidth={1.2} /><h3>{title}</h3><p>{description}</p></li>; })}</ol>
         </section>
 
-        <section id="waitlist" className="waitlist-section section-space">
-          <div className="quest-marker" aria-hidden="true">!</div><div className="section-heading" data-reveal><h2>{text.waitTitle}<br /><em>{text.waitAccent}</em></h2><p>{text.waitBody}</p></div>
-          <div className="waitlist-content"><Button asChild><a href={accessHref}>{accessLabel}<ArrowRight size={14} /></a></Button></div>
+        <section id="waitlist" className="waitlist-section section-space" aria-labelledby="waitlist-title">
+          <div className="waitlist-layout section-width">
+            <WarlockPortal />
+            <div className="waitlist-copy">
+              <p className="eyebrow waitlist-quest"><span className="quest-marker" aria-hidden="true">!</span>{text.waitChapter}</p>
+              <div className="section-heading" data-reveal><h2 id="waitlist-title">{text.waitTitle}<br /><em>{text.waitAccent}</em></h2><p>{text.waitBody}</p></div>
+              <div className="waitlist-content"><Button asChild><a href={accessHref}>{profileText[locale].login2}<ArrowRight size={14} /></a></Button></div>
+            </div>
+          </div>
         </section>
 
         <section className="faq-section section-width"><h2>{text.faqTitle}</h2><div>{text.faqs.map(([question, answer]) => <details key={question}><summary>{question}<ChevronDown size={18} /></summary><p>{answer}</p></details>)}</div></section>

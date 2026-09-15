@@ -2,16 +2,15 @@ import { z } from "zod";
 import { Temporal } from "@js-temporal/polyfill";
 import { locales } from "../i18n/config";
 
-export const activities = ["dungeons", "raids", "pvp", "questing", "collecting", "roleplay"] as const;
-export const roles = ["tank", "healer", "damage", "flexible"] as const;
-export const classes = ["warrior", "paladin", "hunter", "rogue", "priest", "deathKnight", "shaman", "mage", "warlock", "monk", "druid", "demonHunter", "evoker"] as const;
+export const activities = ["dungeons", "raids", "pvp", "exploration", "questing", "story", "collecting", "roleplay", "relaxation", "professions"] as const;
+export const roles = ["tank", "healer", "damage"] as const;
+export const classes = ["warrior", "paladin", "hunter", "rogue", "priest", "shaman", "mage", "warlock", "druid"] as const;
 export const factions = ["horde", "alliance"] as const;
-export const goals = ["leveling", "mythicPlus", "raidProgress", "ratedPvp", "achievements", "social"] as const;
 export const priorities = ["wish", "must"] as const;
 export const rolePreferences = ["any", "similar", "complementary"] as const;
 export const experiencePreferences = ["any", "similar", "more", "less"] as const;
-export const experiences = ["new", "returning", "regular", "veteran"] as const;
-export const ageGroups = ["private", "18-24", "25-34", "35-44", "45+"] as const;
+export const experiences = ["new", "returning", "regular", "veteran", "original"] as const;
+export const ageGroups = ["18-24", "25-34", "35-44", "45+"] as const;
 export const timezones = ["Europe/Berlin", "Europe/London", "Europe/Paris", "Europe/Madrid", "Europe/Rome", "Europe/Lisbon", "Europe/Moscow", "America/New_York", "America/Los_Angeles", "UTC"] as const;
 
 export const maxPlaytimes = 14;
@@ -37,28 +36,36 @@ export function parsePlaytimes(form: FormData) {
   })));
 }
 
-export const matchmakingSchema = z.object({
-  classes: z.array(z.enum(classes)).max(classes.length).transform(values => [...new Set(values)]).default([]),
+const classicClassesSchema = z.array(z.enum([...classes, "deathKnight", "monk", "demonHunter", "evoker"])).max(13)
+  .transform(values => [...new Set(values)].filter((value): value is typeof classes[number] => classes.some(playerClass => playerClass === value)));
+
+export const matchmakingSchema = z.preprocess(value => {
+  if (value && typeof value === "object" && "preferredClasses" in value && Array.isArray(value.preferredClasses)) {
+    const selected = value.preferredClasses;
+    if (selected.length && selected.every(playerClass => ["deathKnight", "monk", "demonHunter", "evoker"].includes(playerClass))) {
+      return { ...value, classPriority: "wish" };
+    }
+  }
+  return value;
+}, z.object({
+  classes: classicClassesSchema.default([]),
   factions: z.array(z.enum(factions)).max(factions.length).transform(values => [...new Set(values)]).default([]),
-  goals: z.array(z.enum(goals)).max(goals.length).transform(values => [...new Set(values)]).default([]),
-  goalPriority: z.enum(priorities).default("wish"),
-  preferredClasses: z.array(z.enum(classes)).max(classes.length).transform(values => [...new Set(values)]).default([]),
+  preferredClasses: classicClassesSchema.default([]),
   classPriority: z.enum(priorities).default("wish"),
-  factionPriority: z.enum(priorities).default("wish"),
   rolePreference: z.enum(rolePreferences).default("any"),
   rolePriority: z.enum(priorities).default("wish"),
   experiencePreference: z.enum(experiencePreferences).default("any"),
   experiencePriority: z.enum(priorities).default("wish"),
 }).superRefine((value, context) => {
-  for (const [priority, selected] of [["goalPriority", value.goals.length], ["classPriority", value.preferredClasses.length], ["factionPriority", value.factions.length], ["rolePriority", value.rolePreference !== "any"], ["experiencePriority", value.experiencePreference !== "any"]] as const) {
+  for (const [priority, selected] of [["classPriority", value.preferredClasses.length], ["rolePriority", value.rolePreference !== "any"], ["experiencePriority", value.experiencePreference !== "any"]] as const) {
     if (value[priority] === "must" && !selected) context.addIssue({ code: "custom", path: [priority], message: "A must criterion requires a selection" });
   }
-});
+}));
 
 export function parseMatchmaking(form: FormData) {
   return matchmakingSchema.safeParse({
-    classes: form.getAll("classes"), factions: form.getAll("factions"), goals: form.getAll("goals"), preferredClasses: form.getAll("preferredClasses"),
-    goalPriority: form.get("goalPriority") ?? "wish", classPriority: form.get("classPriority") ?? "wish", factionPriority: form.get("factionPriority") ?? "wish",
+    classes: form.getAll("classes"), factions: form.getAll("factions"), preferredClasses: form.getAll("preferredClasses"),
+    classPriority: form.get("classPriority") ?? "wish",
     rolePreference: form.get("rolePreference") ?? "any", rolePriority: form.get("rolePriority") ?? "wish",
     experiencePreference: form.get("experiencePreference") ?? "any", experiencePriority: form.get("experiencePriority") ?? "wish",
   });
@@ -70,23 +77,32 @@ export const profileSchema = z.object({
   matchmaking: matchmakingSchema.nullish(),
   region: z.enum(["EU", "US"]),
   language: z.enum(locales),
-  role: z.enum(roles),
-  activities: z.array(z.enum(activities)).min(1).max(6).transform(values => [...new Set(values)]),
+  roles: z.array(z.enum(roles)).min(1).max(roles.length).transform(values => [...new Set(values)]),
+  activities: z.array(z.enum(activities)).min(1).max(activities.length).transform(values => [...new Set(values)]),
   experience: z.enum(experiences),
   ageGroup: z.enum(ageGroups),
   timezone: z.enum(timezones),
-  ...playtimeSchema.shape,
-  playtimes: playtimesSchema.nullish(),
+  playtimes: playtimesSchema,
   adult: z.literal(true),
   discoverable: z.boolean(),
-}).refine(profile => profile.endHour > profile.startHour, { path: ["endHour"], message: "End must be later on the same day" });
+});
 
 export type PlayerProfile = z.infer<typeof profileSchema>;
 export type PublicProfile = { id: string; profile: PlayerProfile };
-export type Match = { id: string; alias: string; score: number; sharedHours: number; activities: string[]; role: string; experience: string };
+export type Match = { id: string; alias: string; score: number; sharedHours: number; activities: string[]; roles: typeof roles[number][]; experience: string };
+
+export function profileRoles(profile: PlayerProfile) {
+  return profile.roles;
+}
+
+function rolesFit(own: PlayerProfile, other: PlayerProfile, preference: "similar" | "complementary") {
+  const ownRoles = profileRoles(own);
+  const otherRoles = profileRoles(other);
+  return ownRoles.some(ownRole => otherRoles.some(otherRole => preference === "similar" ? ownRole === otherRole : ownRole !== otherRole));
+}
 
 export function profilePlaytimes(profile: PlayerProfile) {
-  return profile.playtimes ?? [{ days: profile.days, startHour: profile.startHour, endHour: profile.endHour }];
+  return profile.playtimes;
 }
 
 const commonWords = new Set("the and for with that this you your are have looking ich und der die das ein eine mit für von auf bin ist sind suche nach mir mich auch nicht des den dem wir uns du dir dich dein deine sich was wichtig moi toi les des une pour avec dans est suis mon mes qui que pas nous vous cherche sono con per una uno del della che non cerco mio mia questo los las una uno para con por soy que mis sin busco como muito uma com para por sou meu minha que não procuro мне меня тебя для что это как без или хочу ищу нет мой моя мои мне они она его при про быть чтобы есть очень".split(" "));
@@ -126,11 +142,10 @@ function preferenceFit(own: PlayerProfile, other: PlayerProfile) {
   const preferences = own.matchmaking;
   if (!preferences) return { allowed: true, fit: null };
   const checks: { matches: boolean; priority: typeof priorities[number] }[] = [];
-  if (preferences.goals.length) checks.push({ matches: preferences.goals.some(goal => other.matchmaking?.goals.includes(goal)), priority: preferences.goalPriority });
   if (preferences.preferredClasses.length) checks.push({ matches: preferences.preferredClasses.some(playerClass => other.matchmaking?.classes.includes(playerClass)), priority: preferences.classPriority });
-  if (preferences.factions.length) checks.push({ matches: preferences.factions.some(faction => other.matchmaking?.factions.includes(faction)), priority: preferences.factionPriority });
+  if (preferences.factions.length) checks.push({ matches: preferences.factions.some(faction => other.matchmaking?.factions.includes(faction)), priority: "wish" });
   if (preferences.rolePreference !== "any") checks.push({
-    matches: own.role === "flexible" || other.role === "flexible" || (preferences.rolePreference === "similar" ? own.role === other.role : own.role !== other.role),
+    matches: rolesFit(own, other, preferences.rolePreference),
     priority: preferences.rolePriority,
   });
   if (preferences.experiencePreference !== "any") {
@@ -162,17 +177,15 @@ export function rankMatches(own: PlayerProfile, candidates: PublicProfile[], now
     const schedule = overlap / Math.max(ownTime, candidateTime);
     const interests = sharedActivities.length / new Set([...own.activities, ...profile.activities]).size;
     const experience = own.experience === profile.experience ? 1 : 0.5;
-    const role = own.role === "flexible" || profile.role === "flexible" || own.role !== profile.role ? 1 : 0.5;
-    const compareAge = own.ageGroup !== "private" && profile.ageGroup !== "private";
-    const age = compareAge && own.ageGroup === profile.ageGroup ? 5 : 0;
-    const totalWeight = compareAge ? 100 : 95;
+    const role = rolesFit(own, profile, "complementary") ? 1 : 0.5;
+    const age = own.ageGroup === profile.ageGroup ? 5 : 0;
     const otherTerms = descriptionTerms(profile);
     const sharedTerms = [...ownTerms].filter(term => otherTerms.has(term)).length;
     const textBonus = sharedTerms ? sharedTerms / new Set([...ownTerms, ...otherTerms]).size * 5 : 0;
-    const baseScore = (schedule * 50 + interests * 30 + experience * 5 + role * 10 + age) / totalWeight * 100;
+    const baseScore = schedule * 50 + interests * 30 + experience * 5 + role * 10 + age;
     const fits = [ownPreferences.fit, otherPreferences.fit].filter(fit => fit !== null);
     const preferenceScore = fits.length ? baseScore * 0.8 + fits.reduce((sum, fit) => sum + fit, 0) / fits.length * 20 : baseScore;
     const score = Math.min(100, Math.round(preferenceScore + textBonus));
-    return [{ id, alias: profile.alias, score, sharedHours: Math.round(overlap / 3600000 * 10) / 10, activities: sharedActivities, role: profile.role, experience: profile.experience }];
+    return [{ id, alias: profile.alias, score, sharedHours: Math.round(overlap / 3600000 * 10) / 10, activities: sharedActivities, roles: profileRoles(profile), experience: profile.experience }];
   }).sort((first, second) => second.score - first.score || second.sharedHours - first.sharedHours || first.id.localeCompare(second.id)).slice(0, 12);
 }

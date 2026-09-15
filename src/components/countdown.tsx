@@ -22,6 +22,14 @@ function remainingFrom(now: number): Remaining | null {
 export function Countdown({ dict }: { dict: Dictionary }) {
   const [remaining, setRemaining] = useState<Remaining | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [launch, setLaunch] = useState<{ date: string; detail: string } | null>(null);
+
+  useEffect(() => {
+    setLaunch({
+      date: new Intl.DateTimeFormat(dict.countdown.locale, { day: "numeric", month: "long" }).format(TARGET),
+      detail: new Intl.DateTimeFormat(dict.countdown.locale, { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", timeZoneName: "short" }).format(TARGET),
+    });
+  }, [dict.countdown.locale]);
 
   useEffect(() => {
     setMounted(true);
@@ -43,7 +51,7 @@ export function Countdown({ dict }: { dict: Dictionary }) {
       <div className="launch-countdown-inner">
       <div className="launch-countdown-heading">
         <img src="https://blz-contentstack-images.akamaized.net/v3/assets/blt9c12f249ac15c7ec/bltee571c6de7ccbaf6/6a95adbf1deff31d75439029/camelot-icon.png" alt="" width={48} height={54} />
-        <h2 aria-live="polite">{mounted && !remaining ? dict.countdown.live : dict.countdown.announcement}</h2>
+        <h2 aria-live="polite">{mounted && !remaining ? dict.countdown.live : <time dateTime={new Date(TARGET).toISOString()} title={launch?.detail}>{dict.countdown.announcement.replace("{date}", launch?.date ?? "...")}</time>}</h2>
       </div>
       <div className="launch-countdown-units" role="timer" aria-live="off" aria-label={dict.countdown.label}>
         {units.map((unit) => (

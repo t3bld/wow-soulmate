@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
 import * as oidc from "openid-client";
 import type { Locale } from "@/i18n/config";
+import type { BnetLogin } from "./bnet-account";
 
 const devFallback = globalThis as typeof globalThis & { soulmateDevSessionPassword?: string };
 
@@ -35,7 +36,7 @@ export async function authClient() {
 }
 
 type LoginTransaction = { state: string; nonce: string; verifier: string; createdAt: number; locale: Locale };
-type IdentitySession = { subject: string; expiresAt: number };
+type IdentitySession = { subject: string; expiresAt: number; account?: BnetLogin };
 
 export async function loginTransaction() {
   const settings = authSettings();

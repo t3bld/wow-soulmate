@@ -16,25 +16,59 @@ datasource db {
 model Profile {
   id           String   @id @default(uuid()) @db.Uuid
   subject      String   @unique
+  bnetBattleTag String? @map("bnet_battle_tag") @db.VarChar(128)
+  bnetEmail String? @map("bnet_email") @db.VarChar(254)
+  bnetEmailVerified Boolean? @map("bnet_email_verified")
+  bnetLastLoginAt DateTime? @map("bnet_last_login_at") @db.Timestamptz(3)
   alias        String
   about        String   @default("") @db.VarChar(1000)
   region       String
   language     String
-  role         String
+  roles        String[]
   activities   String[]
+  classes      String[] @default([])
+  factions     String[] @default([])
   experience   String
   ageGroup     String   @map("age_group")
   timezone     String
-  days         Int[]
-  startHour    Int      @map("start_hour")
-  endHour      Int      @map("end_hour")
-  playtimes    Json?
-  matchmaking  Json?
+  playtimes    ProfilePlaytime[]
+  preferredClasses String[] @default([]) @map("preferred_classes")
+  classPriority String @default("wish") @map("class_priority")
+  rolePreference String @default("any") @map("role_preference")
+  rolePriority String @default("wish") @map("role_priority")
+  experiencePreference String @default("any") @map("experience_preference")
+  experiencePriority String @default("wish") @map("experience_priority")
   adult        Boolean
   discoverable Boolean  @default(false)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  wowImport    WowImport?
 
   @@index([discoverable, region, language])
   @@map("soulmate_profiles")
+}
+
+model ProfilePlaytime {
+  profileId String @map("profile_id") @db.Uuid
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  position Int
+  days Int[]
+  startHour Int @map("start_hour")
+  endHour Int @map("end_hour")
+
+  @@id([profileId, position])
+  @@map("soulmate_profile_playtimes")
+}
+
+model WowImport {
+  subject     String   @id
+  runId       String   @default(uuid()) @map("run_id") @db.Uuid
+  profileId   String?  @unique @map("profile_id") @db.Uuid
+  profile     Profile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  snapshot    Json
+  startedAt   DateTime @map("started_at") @db.Timestamptz(3)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("soulmate_wow_imports")
 }
