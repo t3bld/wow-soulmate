@@ -3,7 +3,6 @@ import { z } from "zod";
 import { operator } from "../i18n/legal";
 
 export const addonFeedbackSchema = z.object({
-  email: z.email().max(254),
   message: z.string().trim().min(10).max(4000),
 });
 
@@ -27,9 +26,8 @@ export async function deliverAddonFeedback(
       body: JSON.stringify({
         from: options.from,
         to: [operator.email],
-        reply_to: parsed.data.email,
         subject: "WoW Soulmate: Addon-Feedback",
-        text: `Antwortadresse: ${parsed.data.email}\n\n${parsed.data.message}`,
+        text: parsed.data.message,
       }),
       signal: AbortSignal.timeout(10_000),
     });

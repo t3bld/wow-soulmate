@@ -10,8 +10,8 @@ import { Button } from "./ui/button";
 export function ProfileHeader({ locale, active, hasProfile = true }: { locale: Locale; active: "soulmates" | "profile" | "addon"; hasProfile?: boolean }) {
   const links = [
     { page: "soulmates", label: matchingText[locale].title, icon: Handshake },
-    { page: "profile", label: matchingText[locale].profile, icon: UserRound },
     { page: "addon", label: addonText[locale].navigation, icon: Download },
+    { page: "profile", label: matchingText[locale].profile, icon: UserRound },
   ];
   return <header className="profile-header section-width">
     <Link className="wordmark" href={`/${locale}`} aria-label="WoW Soulmate">

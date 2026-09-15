@@ -1,4 +1,4 @@
-export const marketingConsentKey = "soulmate-marketing-consent-v4";
+export const marketingConsentKey = "soulmate-marketing-consent-v5";
 export const marketingConsentLifetime = 180 * 86400000;
 export const redditPixelId = "a2_joskcj21ome3";
 

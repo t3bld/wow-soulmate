@@ -4,8 +4,9 @@ import { legalText, legalUpdated, operator, type LegalDocument } from "@/i18n/le
 import { chronicle } from "@/i18n/chronicle";
 import { WorldHeader } from "./world-header";
 import { WorldFooter } from "./world-footer";
+import { CookieSettings } from "./marketing-consent";
 
-export function LegalPage({ locale, document }: { locale: Locale; document: LegalDocument }) {
+export function LegalPage({ locale, document, showCookieSettings = false }: { locale: Locale; document: LegalDocument; showCookieSettings?: boolean }) {
   const text = legalText[locale];
   const updated = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${legalUpdated}T00:00:00Z`));
 
@@ -16,6 +17,7 @@ export function LegalPage({ locale, document }: { locale: Locale; document: Lega
       <p className="eyebrow">WoW Soulmate</p>
       <h1>{document.title}</h1>
       <p className="legal-lead">{document.lead}</p>
+      {showCookieSettings && <CookieSettings locale={locale} />}
       <section className="legal-operator">
         <h2>{text.operatorHeading}</h2>
         <address>

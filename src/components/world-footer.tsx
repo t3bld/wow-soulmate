@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import { chronicle } from "@/i18n/chronicle";
 import { legalText } from "@/i18n/legal";
-import { CookieSettings } from "./marketing-consent";
 
 export function WorldFooter({ locale, homeHref = `/${locale}` }: { locale: Locale; homeHref?: string }) {
   const text = chronicle[locale];
@@ -22,7 +21,6 @@ export function WorldFooter({ locale, homeHref = `/${locale}` }: { locale: Local
         <nav className="footer-legal">
           <Link href={`/${locale}/imprint`}>{legalText[locale].imprintLink}</Link>
           <Link href={`/${locale}/privacy`}>{legalText[locale].privacyLink}</Link>
-          <CookieSettings locale={locale} />
         </nav>
         <p>{text.independent}</p>
       </div>

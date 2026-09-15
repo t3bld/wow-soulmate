@@ -4,7 +4,7 @@ test("Reddit conversions require prior consent and bounded anonymous receipts", 
   const consent = `${marketingConsentKey}=${encodeURIComponent(JSON.stringify({ allowed: true, savedAt: now }))}`;
   assert.equal(hasMarketingConsent(consent), true);
   assert.equal(hasMarketingConsent(""), false);
-  for (const version of ["v1", "v2", "v3"]) assert.equal(hasMarketingConsent(consent.replace("-v4", `-${version}`)), false);
+  for (const version of ["v1", "v2", "v3", "v4"]) assert.equal(hasMarketingConsent(consent.replace("-v5", `-${version}`)), false);
   assert.equal(createRedditReceipt(""), null);
   assert.equal(createRedditReceipt(`${consent}; soulmate-marketing-disabled=1`), null);
   const firstReceipt = createRedditReceipt(consent)!;
@@ -30,6 +30,73 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { marketingConsentKey, marketingConsentLifetime, readMarketingConsent, writeMarketingConsent } from "./marketing-consent";
 import { redditConversionPayload, sendRedditConversion } from "./reddit-conversions";
+import { metaConversionPayload, sendMetaConversion } from "./meta-conversions";
+
+test("Meta CAPI shares pixel event names and IDs with consent and minimal website data", () => {
+  const now = Date.now();
+  const consent = `${marketingConsentKey}=${encodeURIComponent(writeMarketingConsent(true, now))}`;
+  const receipt = createRedditReceipt(consent)!;
+  const fbp = `fb.1.${now}.123456789`;
+  const fbc = `fb.1.${now}.test-click`;
+  const cookies = `${consent}; _fbp=${fbp}; _fbc=${fbc}; email=private@example.com`;
+  const context = { origin: "https://www.wowsoulmate.com", path: "/de/profile?private=value#secret", userAgent: "Test Browser" };
+  const payload = metaConversionPayload("SignUp", receipt, cookies, context, now)!;
+  const browser = metaConversionCommand("SignUp", receipt, now)!;
+  assert.ok(browser[0] === "track" && browser.length === 4);
+  assert.deepEqual(payload.data[0], {
+    event_name: "CompleteRegistration", event_time: Math.floor(JSON.parse(receipt).createdAt / 1000), event_id: browser[3].eventID,
+    action_source: "website", event_source_url: "https://www.wowsoulmate.com/de/profile",
+    user_data: { client_user_agent: "Test Browser", fbp, fbc },
+  });
+  for (const [event, path] of [["BnetLoginCompleted", "/oauth/redirect?code=secret"], ["AddonFeedbackSubmitted", "/pl/addon"]] as const) {
+    assert.equal(metaConversionPayload(event, receipt, cookies, { ...context, path }, now)?.data[0].event_name, event);
+  }
+  for (const header of ["", consent, `${cookies}; soulmate-marketing-disabled=1`, `${consent}; _fbp=invalid; _fbc=invalid`]) {
+    assert.equal(metaConversionPayload("SignUp", receipt, header, context, now), null);
+  }
+  assert.equal(metaConversionPayload("SignUp", receipt, `${consent}; _fbc=${fbc}`, context, now)?.data[0].user_data.fbc, fbc);
+  assert.equal(metaConversionPayload("SignUp", receipt, `${consent}; _fbp=${fbp}`, context, now)?.data[0].user_data.fbp, fbp);
+  for (const invalid of [{ ...context, origin: "https://user:secret@example.com" }, { ...context, path: "https://other.example/de/profile" }, { ...context, path: "/de/private-user" }, { ...context, origin: "http://example.com" }, { ...context, userAgent: "" }, { ...context, userAgent: "bad\r\nvalue" }]) {
+    assert.equal(metaConversionPayload("SignUp", receipt, cookies, invalid, now), null);
+  }
+  assert.equal(metaConversionPayload("SignUp", receipt, cookies, context, now + 300000), null);
+  assert.equal(metaConversionPayload("SignUp", "invalid", cookies, context, now), null);
+});
+
+test("Meta CAPI bounds delivery, verifies acceptance and keeps retry IDs unchanged", async () => {
+  const consent = `${marketingConsentKey}=${encodeURIComponent(writeMarketingConsent(true))}`;
+  const receipt = createRedditReceipt(consent)!;
+  const cookies = `${consent}; _fbp=fb.1.1789460000000.12345`;
+  const context = { origin: "http://localhost:3000", path: "/en/profile", userAgent: "Test Browser" };
+  const calls: RequestInit[] = [];
+  const request: typeof fetch = async (url, options) => {
+    assert.equal(url, "https://graph.facebook.com/v26.0/1104846879163162/events");
+    calls.push(options!);
+    return calls.length === 1 ? new Response(null, { status: 503 }) : Response.json({ events_received: 1 });
+  };
+  assert.equal(await sendMetaConversion("SignUp", receipt, cookies, context, undefined, undefined, request), "disabled");
+  assert.equal(await sendMetaConversion("SignUp", receipt, consent, context, "test-token", undefined, request), "skipped");
+  assert.equal(calls.length, 0);
+  assert.equal(await sendMetaConversion("SignUp", receipt, cookies, context, "test-token", "TEST123", request), "accepted");
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].body, calls[1].body);
+  assert.equal(calls[0].redirect, "error");
+  assert.equal(calls[0].cache, "no-store");
+  assert.ok(calls[0].signal);
+  assert.deepEqual(calls[0].headers, { Authorization: "Bearer test-token", "Content-Type": "application/json" });
+  assert.equal(JSON.parse(calls[0].body as string).test_event_code, "TEST123");
+  for (const status of [400, 401, 403, 429]) {
+    let attempts = 0;
+    assert.equal(await sendMetaConversion("SignUp", receipt, cookies, context, "test-token", undefined, async () => { attempts++; return new Response(null, { status }); }), "failed");
+    assert.equal(attempts, 1);
+  }
+  for (const response of [{}, { events_received: 0 }, { events_received: 1, error: {} }]) {
+    assert.equal(await sendMetaConversion("SignUp", receipt, cookies, context, "test-token", undefined, async () => Response.json(response)), "failed");
+  }
+  let failures = 0;
+  assert.equal(await sendMetaConversion("SignUp", receipt, cookies, context, "test-token", undefined, async () => { failures++; throw new Error("private error"); }), "failed");
+  assert.equal(failures, 2);
+});
 
 test("Reddit CAPI shares pixel IDs, requires consent and only forwards allowlisted data", () => {
   const now = Date.now();

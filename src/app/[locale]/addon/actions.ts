@@ -15,12 +15,12 @@ export async function sendAddonFeedback(locale: Locale, _previous: FeedbackState
   const text = addonText[locale];
   const subject = await currentSubject();
   if (!subject) return { success: false, message: profileText[locale].sessionExpired };
-  const parsed = addonFeedbackSchema.safeParse({ email: form.get("email"), message: form.get("message") });
+  const parsed = addonFeedbackSchema.safeParse({ message: form.get("message") });
   if (!parsed.success) return { success: false, message: text.invalid };
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.FEEDBACK_FROM_EMAIL;
   if (!apiKey || !from) return { success: false, message: text.failed };
   const result = await deliverAddonFeedback(parsed.data, { apiKey, from, subject, claimSlot: claimFeedbackSlot });
-  if (result === "sent") await recordRedditEvent("AddonFeedbackSubmitted");
+  if (result === "sent") await recordRedditEvent("AddonFeedbackSubmitted", `/${locale}/addon`);
   return { success: result === "sent", message: text[result] };
 }

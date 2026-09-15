@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { Settings2, X } from "lucide-react";
+import { Button } from "./ui/button";
 import type { Locale } from "@/i18n/config";
 import { marketingText } from "@/i18n/marketing";
 import { marketingConsentKey, marketingConsentLifetime, readMarketingConsent, redditPixelId, writeMarketingConsent } from "@/lib/marketing-consent";
@@ -48,7 +49,7 @@ function syncConsentCookie() {
 }
 
 export function CookieSettings({ locale }: { locale: Locale }) {
-  return <button className="cookie-settings" type="button" onClick={() => window.dispatchEvent(new Event("soulmate-cookie-settings"))}>{marketingText[locale].settings}</button>;
+  return <Button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new Event("soulmate-cookie-settings"))}><Settings2 size={18} aria-hidden="true" />{marketingText[locale].settings}</Button>;
 }
 
 export function MarketingConsent({ locale, nonce }: { locale: Locale; nonce?: string }) {

@@ -35,7 +35,7 @@ export async function updateProfile(locale: Locale, _previous: SaveState, form: 
     const identity = await currentIdentity();
     if (!identity || identity.subject !== subject) return { message: text.sessionExpired, success: false };
     const saved = await saveProfile(subject, parsed.data, identity.account, identity.userId);
-    if (saved.created) await recordRedditEvent("SignUp");
+    if (saved.created) await recordRedditEvent("SignUp", `/${locale}/profile`);
   }
   catch (error) {
     const code = error && typeof error === "object" && "code" in error && typeof error.code === "string" && /^P\d{4}$/.test(error.code) ? error.code : undefined;

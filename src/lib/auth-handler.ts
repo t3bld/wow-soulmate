@@ -1,7 +1,7 @@
 import { auth } from "./auth";
 import { bnetLoginContext } from "./better-auth";
 import { createRedditReceipt, redditEventCookie, redditEventLifetime } from "./reddit-events";
-import { queueRedditConversion } from "./reddit-events-server";
+import { queueMetaConversion, queueRedditConversion } from "./reddit-events-server";
 
 const allowedPaths = new Set(["/sign-in/social", "/callback/battlenet", "/get-session", "/sign-out", "/list-sessions", "/revoke-session", "/revoke-other-sessions", "/revoke-sessions"]);
 
@@ -40,6 +40,7 @@ export async function handleAuth(request: Request) {
     if (receipt) {
       response.headers.append("Set-Cookie", `${redditEventCookie("BnetLoginCompleted")}=${encodeURIComponent(receipt)}; Path=/; Max-Age=${redditEventLifetime}; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`);
       queueRedditConversion("BnetLoginCompleted", receipt, cookieHeader);
+      queueMetaConversion("BnetLoginCompleted", receipt, cookieHeader, "/oauth/redirect", request.headers.get("user-agent") ?? "");
     }
   }
   response.headers.set("Cache-Control", "private, no-store");
