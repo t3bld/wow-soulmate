@@ -19,6 +19,10 @@ test("production CSP requires nonces and rejects inline handlers and eval", () =
   assert.match(csp, /script-src-attr 'none'/);
   assert.match(csp, /frame-ancestors 'none'/);
   assert.match(csp, /connect-src 'self' https:\/\/alb.reddit.com/);
+  const connections = csp.split(";").find(directive => directive.trim().startsWith("connect-src "))!.trim().split(/\s+/);
+  assert.ok(connections.includes("https://ads.reddit.com"));
+  assert.ok(connections.includes("https://pixel-config.reddit.com"));
+  assert.equal(connections.includes("*"), false);
   assert.ok(csp.split(";").find(directive => directive.trim().startsWith("connect-src "))?.includes("https://www.facebook.com"));
   assert.match(script, /https:\/\/connect.facebook.net/);
   assert.match(contentSecurityPolicy("test-nonce-with-32-characters-long", true), /'unsafe-eval'/);

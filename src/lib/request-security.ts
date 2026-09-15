@@ -12,7 +12,7 @@ export function contentSecurityPolicy(nonce: string, development = false) {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self'",
-    `connect-src 'self' https://alb.reddit.com https://www.redditstatic.com https://connect.facebook.net https://www.facebook.com${development ? " ws: wss:" : ""}`,
+    `connect-src 'self' https://alb.reddit.com https://ads.reddit.com https://pixel-config.reddit.com https://www.redditstatic.com https://connect.facebook.net https://www.facebook.com${development ? " ws: wss:" : ""}`,
     "object-src 'none'", "base-uri 'self'", "frame-ancestors 'none'", "frame-src 'none'",
     "form-action 'self' https://oauth.battle.net", "worker-src 'self' blob:",
     ...(!development ? ["upgrade-insecure-requests"] : []),
