@@ -20,6 +20,7 @@ model Profile {
   bnetEmail String? @map("bnet_email") @db.VarChar(254)
   bnetEmailVerified Boolean? @map("bnet_email_verified")
   bnetLastLoginAt DateTime? @map("bnet_last_login_at") @db.Timestamptz(3)
+  notificationEmail String? @map("notification_email") @db.VarChar(254)
   alias        String
   about        String   @default("") @db.VarChar(1000)
   region       String

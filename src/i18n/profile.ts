@@ -56,15 +56,27 @@ export const questionnaireText = {
 };
 
 export const matchingText = {
-  en: { title: "Soulmates", heading: "Your Soulmates", profile: "Profile" },
-  de: { title: "Soulmates", heading: "Deine Soulmates", profile: "Profil" },
-  fr: { title: "Soulmates", heading: "Tes Soulmates", profile: "Profil" },
-  es: { title: "Soulmates", heading: "Tus Soulmates", profile: "Perfil" },
-  it: { title: "Soulmates", heading: "I tuoi Soulmates", profile: "Profilo" },
-  pt: { title: "Soulmates", heading: "Os teus Soulmates", profile: "Perfil" },
-  "pt-BR": { title: "Soulmates", heading: "Seus Soulmates", profile: "Perfil" },
-  pl: { title: "Soulmates", heading: "Twoi Soulmates", profile: "Profil" },
-  ru: { title: "Soulmates", heading: "Твои Soulmates", profile: "Профиль" },
+  en: { title: "Soulmates", heading: "Your Soulmates", profile: "Profile", betaNotice: "WoW Soulmate is still in beta. No players are shown yet. We will enable matching once more players have joined. Thank you for your patience!" },
+  de: { title: "Soulmates", heading: "Deine Soulmates", profile: "Profil", betaNotice: "WoW Soulmate ist noch in der Beta. Aktuell werden noch keine Spieler angezeigt. Wir schalten das Matching frei, sobald mehr Spieler dabei sind. Danke für deine Geduld!" },
+  fr: { title: "Soulmates", heading: "Tes Soulmates", profile: "Profil", betaNotice: "WoW Soulmate est encore en bêta. Aucun joueur n'est affiché pour le moment. Nous activerons la recherche de partenaires lorsque davantage de joueurs nous auront rejoints. Merci de ta patience !" },
+  es: { title: "Soulmates", heading: "Tus Soulmates", profile: "Perfil", betaNotice: "WoW Soulmate sigue en beta. Todavía no se muestra ningún jugador. Activaremos la búsqueda de compañeros cuando se hayan unido más jugadores. ¡Gracias por tu paciencia!" },
+  it: { title: "Soulmates", heading: "I tuoi Soulmates", profile: "Profilo", betaNotice: "WoW Soulmate è ancora in beta. Per ora non viene mostrato nessun giocatore. Attiveremo la ricerca di compagni quando si saranno uniti più giocatori. Grazie per la pazienza!" },
+  pt: { title: "Soulmates", heading: "Os teus Soulmates", profile: "Perfil", betaNotice: "O WoW Soulmate ainda está em beta. Ainda não são apresentados jogadores. Vamos ativar a procura de companheiros quando mais jogadores se juntarem a nós. Obrigado pela tua paciência!" },
+  "pt-BR": { title: "Soulmates", heading: "Seus Soulmates", profile: "Perfil", betaNotice: "O WoW Soulmate ainda está em beta. Nenhum jogador é exibido por enquanto. Vamos ativar a busca de companheiros quando mais jogadores se cadastrarem. Obrigado pela paciência!" },
+  pl: { title: "Soulmates", heading: "Twoi Soulmates", profile: "Profil", betaNotice: "WoW Soulmate jest jeszcze w fazie beta. Na razie nie wyświetlamy żadnych graczy. Włączymy dobieranie graczy, gdy dołączy ich więcej. Dziękujemy za cierpliwość!" },
+  ru: { title: "Soulmates", heading: "Твои Soulmates", profile: "Профиль", betaNotice: "WoW Soulmate пока в бета-версии. Другие игроки пока не отображаются. Мы включим подбор напарников, когда зарегистрируется больше игроков. Спасибо за терпение!" },
+};
+
+export const notificationEmailText = {
+  en: { label: "Email (optional)", hint: "Leave your email so we can notify you when a Soulmate is found. Your address stays private. You can remove it at any time by clearing this field. No match notifications are sent during the beta.", invalid: "Enter a valid email address or leave the field empty." },
+  de: { label: "E-Mail (optional)", hint: "Gib deine E-Mail-Adresse an, damit wir dich informieren können, wenn ein Soulmate gefunden wurde. Deine Adresse bleibt privat. Du kannst sie jederzeit entfernen, indem du dieses Feld leerst. Während der Beta werden noch keine Match-Benachrichtigungen verschickt.", invalid: "Gib eine gültige E-Mail-Adresse ein oder lasse das Feld leer." },
+  fr: { label: "E-mail (facultatif)", hint: "Indique ton adresse e-mail pour que nous puissions te prévenir lorsqu'un Soulmate est trouvé. Ton adresse reste privée. Tu peux la supprimer à tout moment en vidant ce champ. Aucune notification de compatibilité n'est envoyée pendant la bêta.", invalid: "Saisis une adresse e-mail valide ou laisse ce champ vide." },
+  es: { label: "Correo electrónico (opcional)", hint: "Deja tu correo para que podamos avisarte cuando se encuentre un Soulmate. Tu dirección seguirá siendo privada. Puedes eliminarla cuando quieras dejando este campo vacío. Durante la beta no se envían notificaciones de coincidencias.", invalid: "Introduce una dirección de correo válida o deja el campo vacío." },
+  it: { label: "E-mail (facoltativa)", hint: "Lascia la tua e-mail per permetterci di avvisarti quando viene trovato un Soulmate. Il tuo indirizzo resta privato. Puoi rimuoverlo in qualsiasi momento svuotando questo campo. Durante la beta non vengono inviate notifiche di compatibilità.", invalid: "Inserisci un indirizzo e-mail valido oppure lascia il campo vuoto." },
+  pt: { label: "E-mail (opcional)", hint: "Deixa o teu e-mail para te podermos avisar quando for encontrado um Soulmate. O teu endereço permanece privado. Podes removê-lo a qualquer momento, deixando este campo vazio. Durante a beta não são enviadas notificações de compatibilidade.", invalid: "Introduz um endereço de e-mail válido ou deixa o campo vazio." },
+  "pt-BR": { label: "E-mail (opcional)", hint: "Deixe seu e-mail para podermos avisar quando um Soulmate for encontrado. Seu endereço permanece privado. Você pode removê-lo a qualquer momento, deixando este campo vazio. Durante a beta não são enviadas notificações de compatibilidade.", invalid: "Digite um endereço de e-mail válido ou deixe o campo vazio." },
+  pl: { label: "E-mail (opcjonalnie)", hint: "Podaj adres e-mail, abyśmy mogli powiadomić Cię o znalezieniu Soulmate. Twój adres pozostaje prywatny. Możesz go usunąć w dowolnym momencie, pozostawiając to pole puste. W fazie beta nie wysyłamy powiadomień o dopasowaniach.", invalid: "Podaj prawidłowy adres e-mail lub pozostaw pole puste." },
+  ru: { label: "Электронная почта (необязательно)", hint: "Укажи адрес электронной почты, чтобы мы могли сообщить, когда найдётся Soulmate. Адрес останется приватным. Его можно удалить в любой момент, очистив это поле. Во время бета-тестирования уведомления о совпадениях не отправляются.", invalid: "Укажи действительный адрес электронной почты или оставь поле пустым." },
 };
 
 export const profileOverviewText = {

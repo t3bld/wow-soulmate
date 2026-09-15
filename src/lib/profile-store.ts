@@ -2,7 +2,7 @@ import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { randomUUID } from "node:crypto";
-import { matchmakingSchema, profileSchema, type PlayerProfile, type PublicProfile } from "./profile";
+import { matchmakingSchema, ownProfileSchema, profileSchema, type OwnProfile, type PlayerProfile, type PublicProfile } from "./profile";
 import { bnetProfileData, type BnetLogin } from "./bnet-account";
 import type { WowSnapshot } from "./wow-import";
 import { feedbackRateLimitQuery } from "./feedback-rate-limit";
@@ -26,17 +26,17 @@ export function database() {
   globalDatabase.soulmatePrismaSchema = databaseSchema;
   return globalDatabase.soulmatePrisma ??= new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL, max: 3, connectionTimeoutMillis: 5000, idleTimeoutMillis: 10000, statement_timeout: 10000 }),
-    omit: { profile: { bnetBattleTag: true, bnetEmail: true, bnetEmailVerified: true, bnetLastLoginAt: true } },
+    omit: { profile: { bnetBattleTag: true, bnetEmail: true, bnetEmailVerified: true, bnetLastLoginAt: true, notificationEmail: true } },
   });
 }
 
-export async function getProfile(subject: string): Promise<PlayerProfile | null> {
-  const row = await database().profile.findUnique({ where: { subject }, include: questionnaireInclude });
-  return row ? profileSchema.parse(questionnaireData(row)) : null;
+export async function getProfile(subject: string): Promise<OwnProfile | null> {
+  const row = await database().profile.findUnique({ where: { subject }, include: questionnaireInclude, omit: { notificationEmail: false } });
+  return row ? ownProfileSchema.parse(questionnaireData(row)) : null;
 }
 
-export async function saveProfile(subject: string, profile: PlayerProfile, account?: BnetLogin, userId?: string) {
-  const { playtimes, matchmaking, ...parsed } = profileSchema.parse(profile);
+export async function saveProfile(subject: string, profile: OwnProfile, account?: BnetLogin, userId?: string) {
+  const { playtimes, matchmaking, ...parsed } = ownProfileSchema.parse(profile);
   const data = { ...parsed, ...matchmakingSchema.parse(matchmaking ?? {}) };
   const slots = playtimes.map((playtime, position) => ({ ...playtime, position }));
   return withProfileLock(subject, async transaction => {

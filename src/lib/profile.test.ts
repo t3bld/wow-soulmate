@@ -1,11 +1,27 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { Temporal } from "@js-temporal/polyfill";
-import { activities, classes, maxPlaytimes, parseMatchmaking, parsePlaytimes, profilePlaytimes, profileRoles, profileSchema, rankMatches, type PlayerProfile } from "./profile";
+import { activities, classes, maxPlaytimes, ownProfileSchema, parseMatchmaking, parsePlaytimes, profilePlaytimes, profileRoles, profileSchema, rankMatches, type PlayerProfile } from "./profile";
 import { locales } from "../i18n/config";
 
 const base: PlayerProfile = { alias: "Mira", region: "EU", language: "en", roles: ["healer"], activities: ["dungeons"], experience: "regular", ageGroup: "25-34", timezone: "Europe/Berlin", playtimes: [{ days: [1], startHour: 18, endHour: 22 }], adult: true, discoverable: true };
 const now = Temporal.Instant.from("2026-09-13T00:00:00Z");
+
+test("notification email is optional, validated and excluded from public profiles and matches", () => {
+  for (const notificationEmail of [undefined, null, "", "   "]) {
+    assert.equal(ownProfileSchema.safeParse({ ...base, notificationEmail }).success, true);
+  }
+  const own = ownProfileSchema.parse({ ...base, notificationEmail: " player@example.com " });
+  assert.equal(own.notificationEmail, "player@example.com");
+  assert.equal(ownProfileSchema.parse({ ...own, notificationEmail: "" }).notificationEmail, null);
+  for (const notificationEmail of ["invalid", "player@", "player@example.com\r\nBcc: other@example.com", "a".repeat(255) + "@example.com", 123]) {
+    assert.equal(ownProfileSchema.safeParse({ ...base, notificationEmail }).success, false);
+  }
+  assert.deepEqual(profileSchema.parse(own), profileSchema.parse(base));
+  const matches = rankMatches(base, [{ id: "candidate", profile: own }], now);
+  assert.equal(matches.length, 1);
+  assert.equal(JSON.stringify(matches).includes("player@example.com"), false);
+});
 
 test("requires a concrete age group and rewards matching age groups", () => {
   for (const ageGroup of [undefined, null, "", "private", "unknown"]) {

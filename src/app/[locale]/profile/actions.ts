@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isLocale, type Locale } from "@/i18n/config";
-import { profileText, questionnaireText, roleSelectionText } from "@/i18n/profile";
+import { notificationEmailText, profileText, questionnaireText, roleSelectionText } from "@/i18n/profile";
 import { currentIdentity, currentSubject, endSession } from "@/lib/auth";
-import { parseMatchmaking, parsePlaytimes, profileSchema, type PlayerProfile } from "@/lib/profile";
+import { notificationEmailSchema, ownProfileSchema, parseMatchmaking, parsePlaytimes, profileSchema, type OwnProfile } from "@/lib/profile";
 import { database, deleteAccount, discardPendingWowImport, saveProfile } from "@/lib/profile-store";
 import { recordRedditEvent } from "@/lib/reddit-events-server";
 
-export type SaveState = { message: string; success: false } | { message: string; success: true; profile: PlayerProfile };
+export type SaveState = { message: string; success: false } | { message: string; success: true; profile: OwnProfile };
 
 export async function updateProfile(locale: Locale, _previous: SaveState, form: FormData): Promise<SaveState> {
   if (!isLocale(locale)) throw new Error("Invalid locale");
@@ -22,9 +22,12 @@ export async function updateProfile(locale: Locale, _previous: SaveState, form: 
   if (!matchmaking.success) return { message: questionnaireText[locale].invalid, success: false };
   const roles = profileSchema.shape.roles.safeParse(form.getAll("roles"));
   if (!roles.success) return { message: roleSelectionText[locale].required, success: false };
-  const parsed = profileSchema.safeParse({
+  const email = notificationEmailSchema.safeParse(form.get("notificationEmail"));
+  if (!email.success) return { message: notificationEmailText[locale].invalid, success: false };
+  const parsed = ownProfileSchema.safeParse({
     alias: form.get("alias"), region: form.get("region"), language: form.get("language"), roles: roles.data,
     about: form.get("about") ?? "",
+    notificationEmail: email.data,
     matchmaking: matchmaking.data,
     experience: form.get("experience"), ageGroup: form.get("ageGroup"), timezone: form.get("timezone"),
     activities: form.getAll("activities"), playtimes: playtimes.data,

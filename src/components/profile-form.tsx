@@ -5,14 +5,14 @@ import { startTransition, useActionState, useEffect, useRef, useState } from "re
 import { flushSync } from "react-dom";
 import { ArrowLeft, ArrowRight, Check, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { updateProfile, type SaveState } from "@/app/[locale]/profile/actions";
-import { activities, ageGroups, classes, experiencePreferences, experiences, factions, maxPlaytimes, parseMatchmaking, parsePlaytimes, priorities, profilePlaytimes, profileRoles, profileSchema, rolePreferences, roles, timezones, type PlayerProfile } from "@/lib/profile";
-import { profileOverviewText, profileText, questionnaireText, roleSelectionText } from "@/i18n/profile";
+import { activities, ageGroups, classes, experiencePreferences, experiences, factions, maxPlaytimes, notificationEmailSchema, parseMatchmaking, parsePlaytimes, priorities, profilePlaytimes, profileRoles, profileSchema, rolePreferences, roles, timezones, type OwnProfile } from "@/lib/profile";
+import { notificationEmailText, profileOverviewText, profileText, questionnaireText, roleSelectionText } from "@/i18n/profile";
 import { locales, nativeLocaleNames, type Locale } from "@/i18n/config";
 import { ProfileAccountActions } from "./profile-account-actions";
 import { Button } from "./ui/button";
 import { redditEventSignal } from "@/lib/reddit-events";
 
-export function ProfileForm({ locale, profile }: { locale: Locale; profile: PlayerProfile | null }) {
+export function ProfileForm({ locale, profile }: { locale: Locale; profile: OwnProfile | null }) {
   const router = useRouter();
   const text = profileText[locale];
   const overview = profileOverviewText[locale];
@@ -99,6 +99,7 @@ export function ProfileForm({ locale, profile }: { locale: Locale; profile: Play
         <section className="profile-summary-group" aria-labelledby="profile-summary-settings">
           <h3 id="profile-summary-settings">{overview.settings}</h3>
           <p className="profile-summary-status">{savedProfile.discoverable ? overview.visible : overview.hidden}</p>
+          <dl><div><dt>{notificationEmailText[locale].label}</dt><dd>{savedProfile.notificationEmail || overview.empty}</dd></div></dl>
           {savedProfile.adult && <p className="profile-summary-consent"><Check size={16} aria-hidden="true" />{text.adult}</p>}
         </section>
       </div>
@@ -109,7 +110,7 @@ export function ProfileForm({ locale, profile }: { locale: Locale; profile: Play
   </>;
 }
 
-function ProfileWizard({ locale, profile, onSaved, onCancel }: { locale: Locale; profile: PlayerProfile | null; onSaved: (profile: PlayerProfile) => void; onCancel?: () => void }) {
+function ProfileWizard({ locale, profile, onSaved, onCancel }: { locale: Locale; profile: OwnProfile | null; onSaved: (profile: OwnProfile) => void; onCancel?: () => void }) {
   const text = profileText[locale];
   const questionnaire = questionnaireText[locale];
   const wizard = text.wizard;
@@ -144,6 +145,7 @@ function ProfileWizard({ locale, profile, onSaved, onCancel }: { locale: Locale;
     const setError = (name: string, message: string) => controls.find(control => control.name === name)?.setCustomValidity(message);
 
     if (index === 0 && !profileSchema.shape.alias.safeParse(data.get("alias")).success) setError("alias", text.invalid);
+    if (index === lastStep && !notificationEmailSchema.safeParse(data.get("notificationEmail")).success) setError("notificationEmail", notificationEmailText[locale].invalid);
     if (index === 1 && !profileSchema.shape.roles.safeParse(data.getAll("roles")).success) setError("roles", roleSelectionText[locale].required);
     if (index === 2 && !data.getAll("activities").length) setError("activities", wizard.activitiesRequired);
     if (index === 2 || index === 3 || index === 4) {
@@ -255,6 +257,10 @@ function ProfileWizard({ locale, profile, onSaved, onCancel }: { locale: Locale;
       <section className="profile-step" data-profile-step={6} hidden={step !== 6} aria-labelledby="profile-wizard-title">
       <label className="consent-row"><input type="checkbox" name="adult" required defaultChecked={profile?.adult || false} /><span>{text.adult}</span></label>
       <label className="consent-row"><input type="checkbox" name="discoverable" defaultChecked={profile?.discoverable || false} /><span>{text.discoverable}</span></label>
+      <div className="profile-fields">
+        <label className="profile-about">{notificationEmailText[locale].label}<input type="email" name="notificationEmail" maxLength={254} autoComplete="email" autoCapitalize="none" spellCheck={false} defaultValue={profile?.notificationEmail || ""} aria-describedby="notification-email-hint" /></label>
+      </div>
+      <p id="notification-email-hint" className="profile-help">{notificationEmailText[locale].hint}</p>
       </section>
       <div className="profile-wizard-actions">
         {onCancel && <Button type="button" className="secondary-button" onClick={onCancel}><X size={17} aria-hidden="true" />{profileOverviewText[locale].cancel}</Button>}

@@ -1,7 +1,7 @@
 import { sessionPrivacyText } from "./security";
 import { conversionText, metaCapiPrivacyText, metaPrivacyText, redditCapiPrivacyText } from "./marketing";
 import type { Locale } from "./config";
-import { profileText } from "./profile";
+import { notificationEmailText, profileText } from "./profile";
 
 export const operator = {
   name: "David Theobald",
@@ -441,6 +441,7 @@ export const legalText: Record<Locale, LegalCopy> = {
 
 for (const locale of Object.keys(legalText) as Locale[]) {
   legalText[locale].privacy.sections[2].body.push(sessionPrivacyText[locale]);
+  legalText[locale].privacy.sections[3].body.push(notificationEmailText[locale].hint);
   legalText[locale].privacy.sections[5].body.push(conversionText[locale].privacy);
   legalText[locale].privacy.sections[5].body.push(redditCapiPrivacyText[locale]);
   legalText[locale].privacy.sections.splice(-1, 0, {

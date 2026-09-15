@@ -88,6 +88,9 @@ export const profileSchema = z.object({
 });
 
 export type PlayerProfile = z.infer<typeof profileSchema>;
+export const notificationEmailSchema = z.string().trim().max(254).pipe(z.union([z.email(), z.literal("")])).transform(value => value || null).nullish();
+export const ownProfileSchema = profileSchema.extend({ notificationEmail: notificationEmailSchema });
+export type OwnProfile = z.infer<typeof ownProfileSchema>;
 export type PublicProfile = { id: string; profile: PlayerProfile };
 export type Match = { id: string; alias: string; score: number; sharedHours: number; activities: string[]; roles: typeof roles[number][]; experience: string };
 

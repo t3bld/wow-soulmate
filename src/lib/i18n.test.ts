@@ -6,7 +6,7 @@ import { legalText } from "../i18n/legal";
 import { addonText } from "../i18n/addon";
 import { conversionText, marketingText, metaCapiPrivacyText, metaPrivacyText, redditCapiPrivacyText } from "../i18n/marketing";
 import { securityText, sessionPrivacyText } from "../i18n/security";
-import { matchingText, profileOverviewText, profileText, questionnaireText, roleSelectionText } from "../i18n/profile";
+import { matchingText, notificationEmailText, profileOverviewText, profileText, questionnaireText, roleSelectionText } from "../i18n/profile";
 import { getDictionary } from "../i18n/get-dictionary";
 import { activities, classes, experiences } from "./profile";
 
@@ -38,6 +38,8 @@ test("all supported locales have complete active translations", () => {
     checkShape(roleSelectionText.en, roleSelectionText[locale], `${locale}.roleSelection`);
     checkShape(profileOverviewText.en, profileOverviewText[locale], `${locale}.profileOverview`);
     checkShape(matchingText.en, matchingText[locale], `${locale}.matching`);
+    checkShape(notificationEmailText.en, notificationEmailText[locale], `${locale}.notificationEmail`);
+    assert.ok(legalText[locale].privacy.sections[3].body.includes(notificationEmailText[locale].hint));
     assert.equal(matchingText[locale].title, "Soulmates");
     checkShape(questionnaireText.en, questionnaireText[locale], `${locale}.questionnaire`);
     checkShape(legalText.en, legalText[locale], `${locale}.legal`);
