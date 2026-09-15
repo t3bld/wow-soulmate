@@ -4,7 +4,7 @@ import { locales, isLocale, nativeLocaleNames } from "../i18n/config";
 import { chronicle, compatibilityText } from "../i18n/chronicle";
 import { legalText } from "../i18n/legal";
 import { addonText } from "../i18n/addon";
-import { conversionText, marketingText, metaPrivacyText } from "../i18n/marketing";
+import { conversionText, marketingText, metaPrivacyText, redditCapiPrivacyText } from "../i18n/marketing";
 import { securityText, sessionPrivacyText } from "../i18n/security";
 import { matchingText, profileOverviewText, profileText, questionnaireText, roleSelectionText } from "../i18n/profile";
 import { getDictionary } from "../i18n/get-dictionary";
@@ -47,6 +47,8 @@ test("all supported locales have complete active translations", () => {
     checkShape(metaPrivacyText.en, metaPrivacyText[locale], `${locale}.metaPrivacy`);
     assert.ok(legalText[locale].privacy.sections.some(section => section.body.includes(metaPrivacyText[locale].body)));
     assert.ok(legalText[locale].privacy.sections[5].body.includes(conversionText[locale].privacy));
+    checkShape(redditCapiPrivacyText.en, redditCapiPrivacyText[locale], `${locale}.redditCapiPrivacy`);
+    assert.ok(legalText[locale].privacy.sections[5].body.includes(redditCapiPrivacyText[locale]));
     checkShape(securityText.en, securityText[locale], `${locale}.security`);
     assert.ok(legalText[locale].privacy.sections[2].body.includes(sessionPrivacyText[locale]));
     checkShape(getDictionary("en").meta, getDictionary(locale).meta, `${locale}.meta`);

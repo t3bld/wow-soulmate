@@ -1,5 +1,5 @@
 import { sessionPrivacyText } from "./security";
-import { conversionText, metaPrivacyText } from "./marketing";
+import { conversionText, metaPrivacyText, redditCapiPrivacyText } from "./marketing";
 import type { Locale } from "./config";
 import { profileText } from "./profile";
 
@@ -442,6 +442,7 @@ export const legalText: Record<Locale, LegalCopy> = {
 for (const locale of Object.keys(legalText) as Locale[]) {
   legalText[locale].privacy.sections[2].body.push(sessionPrivacyText[locale]);
   legalText[locale].privacy.sections[5].body.push(conversionText[locale].privacy);
+  legalText[locale].privacy.sections[5].body.push(redditCapiPrivacyText[locale]);
   legalText[locale].privacy.sections.splice(-1, 0, {
     heading: metaPrivacyText[locale].title,
     body: [metaPrivacyText[locale].body],

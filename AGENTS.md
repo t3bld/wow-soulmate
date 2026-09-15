@@ -2,6 +2,8 @@
 
 Use VS Code with GitHub Copilot for development. Do not add Claude Code or Windsurf configuration. Keep shared agent skills in `.agents/skills/`.
 
+Do not update or modify `README.md`.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

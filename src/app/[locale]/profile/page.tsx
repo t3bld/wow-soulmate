@@ -8,8 +8,6 @@ import { currentSubject } from "@/lib/auth";
 import { getProfile } from "@/lib/profile-store";
 import { type PlayerProfile } from "@/lib/profile";
 import { ProfileForm } from "@/components/profile-form";
-import { ProfileSessions } from "@/components/profile-sessions";
-import { securityText } from "@/i18n/security";
 import "./profile.css";
 
 export const dynamic = "force-dynamic";
@@ -38,9 +36,7 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
       {query.auth === "failed" && <p className="profile-notice" role="alert">{text.failed}</p>}
       {query.status === "deleted" && <p className="profile-notice" role="status">{text.deleted}</p>}
       {query.status === "delete-error" && <p className="profile-notice" role="alert">{text.deleteError}</p>}
-      {query.status === "session-error" && <p className="profile-notice" role="alert">{securityText[locale].error}</p>}
       {storageFailed ? <p className="profile-notice" role="alert">{text.databaseError}</p> : <ProfileForm locale={locale} profile={profile} />}
-      <ProfileSessions locale={locale} />
     </main>
     <WorldFooter locale={locale} />
   </div>;

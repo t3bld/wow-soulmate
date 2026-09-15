@@ -1,6 +1,7 @@
 import { auth } from "./auth";
 import { bnetLoginContext } from "./better-auth";
 import { createRedditReceipt, redditEventCookie, redditEventLifetime } from "./reddit-events";
+import { queueRedditConversion } from "./reddit-events-server";
 
 const allowedPaths = new Set(["/sign-in/social", "/callback/battlenet", "/get-session", "/sign-out", "/list-sessions", "/revoke-session", "/revoke-other-sessions", "/revoke-sessions"]);
 
@@ -34,8 +35,12 @@ export async function handleAuth(request: Request) {
   const context: NonNullable<ReturnType<typeof bnetLoginContext.getStore>> = {};
   const response = await bnetLoginContext.run(context, () => auth().handler(new Request(request, { headers: requestHeaders })));
   if (context.firstLogin) {
-    const receipt = createRedditReceipt(request.headers.get("cookie") ?? "");
-    if (receipt) response.headers.append("Set-Cookie", `${redditEventCookie("BnetLoginCompleted")}=${encodeURIComponent(receipt)}; Path=/; Max-Age=${redditEventLifetime}; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`);
+    const cookieHeader = request.headers.get("cookie") ?? "";
+    const receipt = createRedditReceipt(cookieHeader);
+    if (receipt) {
+      response.headers.append("Set-Cookie", `${redditEventCookie("BnetLoginCompleted")}=${encodeURIComponent(receipt)}; Path=/; Max-Age=${redditEventLifetime}; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`);
+      queueRedditConversion("BnetLoginCompleted", receipt, cookieHeader);
+    }
   }
   response.headers.set("Cache-Control", "private, no-store");
   response.headers.set("Referrer-Policy", "no-referrer");
