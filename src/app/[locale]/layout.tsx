@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Cinzel, Manrope } from "next/font/google";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import "../chronicle.css";
 import { isLocale, locales, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { MarketingConsent } from "@/components/marketing-consent";
 
 const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-sans", display: "swap" });
 const cinzel = Cinzel({
@@ -65,10 +67,11 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   const typedLocale: Locale = locale;
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
     <html lang={typedLocale} className={`${manrope.variable} ${cinzel.variable}`}>
-      <body className="font-[family-name:var(--font-sans)] antialiased">{children}</body>
+      <body className="font-[family-name:var(--font-sans)] antialiased">{children}<MarketingConsent locale={typedLocale} nonce={nonce} /></body>
     </html>
   );
 }

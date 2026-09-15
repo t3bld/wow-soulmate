@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isLocale, type Locale } from "@/i18n/config";
 import { profileText, questionnaireText, roleSelectionText } from "@/i18n/profile";
-import { currentSubject, identitySession } from "@/lib/auth";
+import { currentIdentity, currentSubject, endSession } from "@/lib/auth";
 import { parseMatchmaking, parsePlaytimes, profileSchema, type PlayerProfile } from "@/lib/profile";
-import { deleteProfile, discardPendingWowImport, saveProfile } from "@/lib/profile-store";
+import { database, deleteAccount, discardPendingWowImport, saveProfile } from "@/lib/profile-store";
+import { recordRedditEvent } from "@/lib/reddit-events-server";
 
 export type SaveState = { message: string; success: false } | { message: string; success: true; profile: PlayerProfile };
 
@@ -31,8 +32,10 @@ export async function updateProfile(locale: Locale, _previous: SaveState, form: 
   });
   if (!parsed.success) return { message: text.invalid, success: false };
   try {
-    const session = await identitySession();
-    await saveProfile(subject, parsed.data, session.subject === subject ? session.account : undefined);
+    const identity = await currentIdentity();
+    if (!identity || identity.subject !== subject) return { message: text.sessionExpired, success: false };
+    const saved = await saveProfile(subject, parsed.data, identity.account, identity.userId);
+    if (saved.created) await recordRedditEvent("SignUp");
   }
   catch (error) {
     const code = error && typeof error === "object" && "code" in error && typeof error.code === "string" && /^P\d{4}$/.test(error.code) ? error.code : undefined;
@@ -48,24 +51,48 @@ export async function updateProfile(locale: Locale, _previous: SaveState, form: 
 
 export async function logout(locale: Locale) {
   if (!isLocale(locale)) throw new Error("Invalid locale");
-  const session = await identitySession();
+  const subject = await currentSubject();
   try {
-    if (session.subject) await discardPendingWowImport(session.subject);
+    if (subject) await discardPendingWowImport(subject);
   } finally {
-    session.destroy();
+    await endSession();
   }
   redirect(`/${locale}/profile`);
 }
 
 export async function removeProfile(locale: Locale, form: FormData) {
   if (!isLocale(locale)) throw new Error("Invalid locale");
-  const subject = await currentSubject();
-  if (!subject) redirect(`/${locale}/profile`);
+  const identity = await currentIdentity();
+  if (!identity) redirect(`/${locale}/profile`);
+  const { subject, userId } = identity;
   if (form.get("confirmDelete") !== "on") redirect(`/${locale}/profile?status=delete-error`);
-  try { await deleteProfile(subject); }
+  if (Date.now() - identity.session.createdAt.getTime() > 900000) redirect(`/oauth/login?locale=${locale}`);
+  try {
+    await deleteAccount(subject, userId);
+  }
   catch { redirect(`/${locale}/profile?status=delete-error`); }
-  (await identitySession()).destroy();
+  await endSession();
   revalidatePath(`/${locale}/profile`);
   revalidatePath(`/${locale}/soulmates`);
   redirect(`/${locale}/profile?status=deleted`);
+}
+
+export async function manageSessions(locale: Locale, form: FormData) {
+  if (!isLocale(locale)) throw new Error("Invalid locale");
+  const identity = await currentIdentity();
+  if (!identity) redirect(`/${locale}`);
+  const mode = form.get("mode");
+  const sessionId = form.get("sessionId");
+  if (mode !== "all" && mode !== "others" && (mode !== "one" || typeof sessionId !== "string" || sessionId.length > 255)) throw new Error("Invalid session action");
+  try {
+    await database().session.deleteMany({ where: {
+      userId: identity.userId,
+      ...(mode === "others" ? { id: { not: identity.session.id } } : mode === "one" ? { id: sessionId as string } : {}),
+    } });
+  } catch { redirect(`/${locale}/profile?status=session-error`); }
+  if (mode === "all" || sessionId === identity.session.id) {
+    await endSession();
+    redirect(`/${locale}`);
+  }
+  revalidatePath(`/${locale}/profile`);
 }

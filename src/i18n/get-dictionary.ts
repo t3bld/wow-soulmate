@@ -25,6 +25,16 @@ const dictionaries: Record<Locale, Dictionary> = {
     meta: { title: "WoW Soulmate | Encontra os jogadores que combinam contigo", description: "Encontra companheiros de WoW com interesses e horários compatíveis. Vivam Azeroth juntos." },
     countdown: { locale: "pt", announcement: "Chega a {date}!", label: "WoW: Forever chega em", days: "dias", hours: "h", minutes: "min", seconds: "s", live: "Já chegou. Vamos a isso!" },
   },
+  "pt-BR": {
+    ...en,
+    meta: { title: "WoW Soulmate | Encontre jogadores que combinam com você", description: "Encontre companheiros de WoW com interesses e horários compatíveis. Vivam Azeroth juntos." },
+    countdown: { locale: "pt-BR", announcement: "Lançamento em {date}!", label: "WoW: Forever chega em", days: "dias", hours: "h", minutes: "min", seconds: "s", live: "Já chegou. Vamos jogar!" },
+  },
+  pl: {
+    ...en,
+    meta: { title: "WoW Soulmate | Znajdź graczy, z którymi się dogadasz", description: "Znajdź towarzyszy w WoW o podobnych zainteresowaniach i pasujących godzinach gry. Odkrywajcie Azeroth razem." },
+    countdown: { locale: "pl", announcement: "Premiera {date}!", label: "Do premiery WoW: Forever", days: "dni", hours: "godz.", minutes: "min", seconds: "sek.", live: "Już dostępne. Zaczynamy!" },
+  },
   ru: {
     ...en,
     meta: { title: "WoW Soulmate | Найди игроков на одной волне с тобой", description: "Найди товарищей по WoW с общими интересами и подходящим расписанием. Откройте Азерот вместе." },

@@ -82,8 +82,8 @@ button, a { touch-action: manipulation; }
 .header-actions { display: flex; align-items: center; gap: 22px; }
 .language-menu { position: relative; }
 .language-trigger { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 44px; min-height: 44px; padding: 8px 4px; border: 0; background: transparent; color: var(--bright-gold); font-size: 12px; font-weight: 700; }
-.language-options { position: absolute; top: calc(100% + 9px); right: 0; min-width: 118px; padding: 6px; border: 1px solid var(--edge); background: #101b16; box-shadow: 0 12px 28px #0008; }
-.language-options a { display: block; padding: 9px 10px; color: var(--muted); font-size: 11px; }
+.language-options { position: absolute; top: calc(100% + 9px); right: 0; width: max-content; min-width: 180px; padding: 6px; border: 1px solid var(--edge); background: #101b16; box-shadow: 0 12px 28px #0008; }
+.language-options a { display: block; padding: 9px 10px; color: var(--muted); font-size: 11px; white-space: nowrap; }
 .language-options a:hover, .language-options a[aria-current="page"] { color: var(--bright-gold); background: #c2a57512; }
 .header-cta { font-size: 13px; padding: 11px 19px; min-height: 42px; }
 .mobile-menu { display: none; }

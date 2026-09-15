@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { matchmakingSchema, profileSchema, type PlayerProfile, type PublicProfile } from "./profile";
 import { bnetProfileData, type BnetLogin } from "./bnet-account";
 import type { WowSnapshot } from "./wow-import";
+import { feedbackRateLimitQuery } from "./feedback-rate-limit";
 
 const globalDatabase = globalThis as typeof globalThis & { soulmatePrisma?: PrismaClient; soulmatePrismaSchema?: string };
 const databaseSchema = JSON.stringify([Prisma.prismaVersion.client, Prisma.ModelName, Prisma.ProfileScalarFieldEnum, Prisma.ProfilePlaytimeScalarFieldEnum, Prisma.WowImportScalarFieldEnum]);
@@ -15,7 +16,7 @@ function questionnaireData(row: Prisma.ProfileGetPayload<{ include: typeof quest
   return { ...row, matchmaking: { classes, factions, preferredClasses, classPriority, rolePreference, rolePriority, experiencePreference, experiencePriority } };
 }
 
-function database() {
+export function database() {
   if (!process.env.DATABASE_URL) throw new Error("Database not configured");
   if (globalDatabase.soulmatePrisma && globalDatabase.soulmatePrismaSchema !== databaseSchema) {
     const outdated = globalDatabase.soulmatePrisma;
@@ -34,11 +35,13 @@ export async function getProfile(subject: string): Promise<PlayerProfile | null>
   return row ? profileSchema.parse(questionnaireData(row)) : null;
 }
 
-export async function saveProfile(subject: string, profile: PlayerProfile, account?: BnetLogin) {
+export async function saveProfile(subject: string, profile: PlayerProfile, account?: BnetLogin, userId?: string) {
   const { playtimes, matchmaking, ...parsed } = profileSchema.parse(profile);
   const data = { ...parsed, ...matchmakingSchema.parse(matchmaking ?? {}) };
   const slots = playtimes.map((playtime, position) => ({ ...playtime, position }));
-  await withProfileLock(subject, async transaction => {
+  return withProfileLock(subject, async transaction => {
+    if (userId && !await transaction.user.findFirst({ where: { id: userId, bnetSubject: subject }, select: { id: true } })) throw new Error("Account deleted");
+    const existing = await transaction.profile.findUnique({ where: { subject }, select: { id: true } });
     const saved = await transaction.profile.upsert({
       where: { subject },
       create: { subject, ...data, ...(account ? bnetProfileData(account) : {}), playtimes: { create: slots } },
@@ -48,6 +51,7 @@ export async function saveProfile(subject: string, profile: PlayerProfile, accou
     if (pending && pending.expiresAt > new Date()) {
       await transaction.wowImport.update({ where: { subject }, data: { profileId: saved.id, expiresAt: new Date(pending.startedAt.getTime() + 29 * 86400000) } });
     }
+    return { created: !existing };
   });
 }
 
@@ -59,6 +63,14 @@ export async function deleteProfile(subject: string) {
   await withProfileLock(subject, async transaction => {
     await transaction.wowImport.deleteMany({ where: { subject } });
     await transaction.profile.deleteMany({ where: { subject } });
+  });
+}
+
+export async function deleteAccount(subject: string, userId: string) {
+  await withProfileLock(subject, async transaction => {
+    await transaction.wowImport.deleteMany({ where: { subject } });
+    await transaction.profile.deleteMany({ where: { subject } });
+    await transaction.user.delete({ where: { id: userId, bnetSubject: subject } });
   });
 }
 
@@ -96,6 +108,15 @@ export async function discardPendingWowImport(subject: string) {
 
 export async function purgeExpiredWowImports() {
   return database().wowImport.deleteMany({ where: { expiresAt: { lte: new Date() } } });
+}
+
+export async function claimFeedbackSlot(key: string) {
+  const rows = await database().$queryRaw<{ key: string }[]>(feedbackRateLimitQuery(key));
+  return rows.length === 1;
+}
+
+export async function purgeExpiredFeedbackLimits() {
+  return database().$executeRaw`DELETE FROM soulmate_feedback_rate_limits WHERE next_allowed_at <= CURRENT_TIMESTAMP`;
 }
 
 export async function matchCandidates(subject: string, own: PlayerProfile): Promise<PublicProfile[]> {

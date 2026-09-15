@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { addonFeedbackSchema, deliverAddonFeedback } from "./addon-feedback";
 
 const input = { email: "player@example.com", message: "Please add an in-game friends list." };
-const options = { apiKey: "test-key", from: "Soulmate <feedback@example.com>", subject: "test-player", now: 600_000 };
+const options = { apiKey: "test-key", from: "Soulmate <feedback@example.com>", subject: "test-player", claimSlot: async () => true, now: 600_000 };
 
 test("addon feedback validates email and bounded, nonblank messages", () => {
   assert.equal(addonFeedbackSchema.safeParse(input).success, true);
@@ -44,4 +44,25 @@ test("addon mail never reports provider failures or missing configuration as suc
   assert.equal(await deliverAddonFeedback(input, options, async () => Response.json({})), "failed");
   assert.equal(await deliverAddonFeedback(input, options, async () => { throw new Error("offline"); }), "failed");
   assert.equal(await deliverAddonFeedback(input, { ...options, apiKey: "" }, async () => { assert.fail("must not send"); }), "failed");
+});
+
+test("addon mail fails closed on denied or unavailable rate limit storage", async () => {
+  const request: typeof fetch = async () => { assert.fail("must not send"); };
+  assert.equal(await deliverAddonFeedback(input, { ...options, claimSlot: async () => false }, request), "limited");
+  assert.equal(await deliverAddonFeedback(input, { ...options, claimSlot: async () => { throw new Error("database unavailable"); } }, request), "failed");
+  const invalid = { ...input, message: "" };
+  assert.equal(await deliverAddonFeedback(invalid, { ...options, claimSlot: async () => { assert.fail("invalid input must not touch storage"); } }, request), "failed");
+});
+
+test("rate limit keys are stable across time windows, per account and keyed by a secret", async () => {
+  const keys: string[] = [];
+  const claimSlot = async (key: string) => { keys.push(key); return false; };
+  await deliverAddonFeedback(input, { ...options, claimSlot });
+  await deliverAddonFeedback(input, { ...options, claimSlot, now: 900_000 });
+  await deliverAddonFeedback(input, { ...options, claimSlot, subject: "another-player" });
+  await deliverAddonFeedback(input, { ...options, claimSlot, apiKey: "different-secret" });
+  assert.match(keys[0], /^[a-f0-9]{64}$/);
+  assert.equal(keys[0], keys[1]);
+  assert.notEqual(keys[0], keys[2]);
+  assert.notEqual(keys[0], keys[3]);
 });

@@ -5,12 +5,17 @@ import { Send } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { addonText } from "@/i18n/addon";
 import { operator } from "@/i18n/legal";
-import { sendAddonFeedback } from "@/app/[locale]/addon/actions";
+import { sendAddonFeedback, type FeedbackState } from "@/app/[locale]/addon/actions";
+import { redditEventSignal } from "@/lib/reddit-events";
 import { Button } from "./ui/button";
 
 export function AddonFeedbackForm({ locale, available }: { locale: Locale; available: boolean }) {
   const text = addonText[locale];
-  const [state, action, pending] = useActionState(sendAddonFeedback.bind(null, locale), { success: false, message: "" });
+  const [state, action, pending] = useActionState<FeedbackState, FormData>(async (previous, data) => {
+    const result = await sendAddonFeedback(locale, previous, data);
+    if (result.success) window.dispatchEvent(new Event(redditEventSignal));
+    return result;
+  }, { success: false, message: "" });
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   return <form action={action} className="adventurer-form addon-feedback" aria-busy={pending}>

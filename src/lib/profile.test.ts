@@ -280,8 +280,8 @@ test("accepts every supported group language and only matches the same language"
   assert.equal(profileSchema.safeParse({ ...base, language: "xx" }).success, false);
 });
 
-test("accepts additional European timezones", () => {
-  for (const timezone of ["Europe/Paris", "Europe/Madrid", "Europe/Rome", "Europe/Lisbon", "Europe/Moscow"]) {
+test("accepts European and Brazilian timezones", () => {
+  for (const timezone of ["Europe/Paris", "Europe/Madrid", "Europe/Rome", "Europe/Lisbon", "Europe/Moscow", "Europe/Warsaw", "America/Sao_Paulo", "America/Manaus", "America/Rio_Branco", "America/Noronha"]) {
     const own = profileSchema.parse({ ...base, timezone });
     assert.equal(rankMatches(own, [{ id: timezone, profile: own }], now)[0].sharedHours, 4);
   }
@@ -306,7 +306,7 @@ test("uses shared description terms as a bounded bonus without exposing the text
 });
 
 test("normalizes multilingual description terms and ignores common filler words", () => {
-  for (const [language, about] of [["de", "Gemütliche Abenteuer"], ["fr", "Exploration détendue"], ["es", "Exploración tranquila"], ["it", "Esplorazione tranquilla"], ["pt", "Exploração tranquila"], ["ru", "Спокойные приключения"]] as const) {
+  for (const [language, about] of [["de", "Gemütliche Abenteuer"], ["fr", "Exploration détendue"], ["es", "Exploración tranquila"], ["it", "Esplorazione tranquilla"], ["pt", "Exploração tranquila"], ["pt-BR", "Exploração tranquila"], ["pl", "Spokojne przygody"], ["ru", "Спокойные приключения"]] as const) {
     const own = { ...base, language, about };
     const matched = rankMatches(own, [{ id: "shared", profile: { ...own, about: about.normalize("NFD").toLocaleUpperCase(language) } }], now)[0];
     const withoutText = rankMatches({ ...own, about: "" }, [{ id: "shared", profile: own }], now)[0];
@@ -314,4 +314,9 @@ test("normalizes multilingual description terms and ignores common filler words"
   }
   const own = { ...base, about: "the and for with your" };
   assert.equal(rankMatches(own, [{ id: "filler", profile: own }], now)[0].score, rankMatches(base, [{ id: "base", profile: base }], now)[0].score);
+  for (const [language, about] of [["pt-BR", "você seus suas estou quero"], ["pl", "szukam jestem jest oraz się dla"]] as const) {
+    const profile = { ...base, language, about };
+    const baseline = { ...profile, about: "" };
+    assert.equal(rankMatches(profile, [{ id: "filler", profile }], now)[0].score, rankMatches(baseline, [{ id: "base", profile: baseline }], now)[0].score);
+  }
 });

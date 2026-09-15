@@ -1,3 +1,13 @@
+.profile-sessions { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--edge); }
+.profile-sessions h2 { font-size: 22px; }
+.profile-sessions ul { list-style: none; padding: 0; margin: 20px 0; }
+.profile-sessions li { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--edge); }
+.session-details { min-width: 0; }
+.session-details strong { display: flex; align-items: center; gap: 8px; }
+.session-details p { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; margin: 8px 0 0; }
+.session-controls { display: flex; flex-wrap: wrap; gap: 12px; }
+.session-controls button { white-space: normal; text-align: start; }
+@media (max-width: 520px) { .profile-sessions li { align-items: start; flex-direction: column; } .session-controls, .session-controls form, .session-controls button { width: 100%; } }
 .profile-world { min-height: 100svh; }
 .profile-header { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; padding-block: 24px; border-bottom: 1px solid var(--edge); }
 .profile-header > a { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; color: var(--gold); }

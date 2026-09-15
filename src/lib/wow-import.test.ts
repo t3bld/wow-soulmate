@@ -133,9 +133,11 @@ test("database import lifecycle attaches privately, rejects stale runs, expires 
     const currentRun = await beginWowImport(subject);
     assert.equal(await saveWowImport(subject, staleRun, snapshot), false);
     assert.equal(await saveWowImport(subject, currentRun, snapshot), true);
-    await saveProfile(subject, profile);
+    const saves = await Promise.all([saveProfile(subject, profile), saveProfile(subject, profile)]);
+    assert.equal(saves.filter(saved => saved.created).length, 1);
+    assert.equal(saves.filter(saved => !saved.created).length, 1);
     assert.deepEqual((await getProfile(subject))?.roles, ["healer"]);
-    await saveProfile(subject, { ...profile, roles: ["tank", "healer"] });
+    assert.deepEqual(await saveProfile(subject, { ...profile, roles: ["tank", "healer"] }), { created: false });
     assert.deepEqual((await getProfile(subject))?.roles, ["tank", "healer"]);
     assert.deepEqual((await database().profile.findUniqueOrThrow({ where: { subject } })).roles, ["tank", "healer"]);
     assert.equal(Object.hasOwn((await getProfile(subject))!, "role"), false);

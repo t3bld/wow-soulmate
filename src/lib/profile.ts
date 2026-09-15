@@ -11,7 +11,7 @@ export const rolePreferences = ["any", "similar", "complementary"] as const;
 export const experiencePreferences = ["any", "similar", "more", "less"] as const;
 export const experiences = ["new", "returning", "regular", "veteran", "original"] as const;
 export const ageGroups = ["18-24", "25-34", "35-44", "45+"] as const;
-export const timezones = ["Europe/Berlin", "Europe/London", "Europe/Paris", "Europe/Madrid", "Europe/Rome", "Europe/Lisbon", "Europe/Moscow", "America/New_York", "America/Los_Angeles", "UTC"] as const;
+export const timezones = ["Europe/Berlin", "Europe/London", "Europe/Paris", "Europe/Madrid", "Europe/Rome", "Europe/Lisbon", "Europe/Warsaw", "Europe/Moscow", "America/New_York", "America/Los_Angeles", "America/Sao_Paulo", "America/Manaus", "America/Rio_Branco", "America/Noronha", "UTC"] as const;
 
 export const maxPlaytimes = 14;
 export const playtimeSchema = z.object({
@@ -106,6 +106,7 @@ export function profilePlaytimes(profile: PlayerProfile) {
 }
 
 const commonWords = new Set("the and for with that this you your are have looking ich und der die das ein eine mit für von auf bin ist sind suche nach mir mich auch nicht des den dem wir uns du dir dich dein deine sich was wichtig moi toi les des une pour avec dans est suis mon mes qui que pas nous vous cherche sono con per una uno del della che non cerco mio mia questo los las una uno para con por soy que mis sin busco como muito uma com para por sou meu minha que não procuro мне меня тебя для что это как без или хочу ищу нет мой моя мои мне они она его при про быть чтобы есть очень".split(" "));
+for (const word of "você vocês seu seus sua suas estou quero szukam jestem jest oraz się dla mój moja moje twoje chcę lub nie mam mnie który która które aby też tylko".split(" ")) commonWords.add(word);
 
 function descriptionTerms(profile: PlayerProfile): Set<string> {
   const words = profile.about?.normalize("NFKC").toLocaleLowerCase(profile.language).match(/[\p{L}\p{N}]+/gu) ?? [];

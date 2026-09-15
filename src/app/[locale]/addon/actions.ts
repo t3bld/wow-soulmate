@@ -5,6 +5,8 @@ import { addonText } from "@/i18n/addon";
 import { profileText } from "@/i18n/profile";
 import { currentSubject } from "@/lib/auth";
 import { addonFeedbackSchema, deliverAddonFeedback } from "@/lib/addon-feedback";
+import { claimFeedbackSlot } from "@/lib/profile-store";
+import { recordRedditEvent } from "@/lib/reddit-events-server";
 
 export type FeedbackState = { success: boolean; message: string };
 
@@ -18,6 +20,7 @@ export async function sendAddonFeedback(locale: Locale, _previous: FeedbackState
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.FEEDBACK_FROM_EMAIL;
   if (!apiKey || !from) return { success: false, message: text.failed };
-  const result = await deliverAddonFeedback(parsed.data, { apiKey, from, subject });
+  const result = await deliverAddonFeedback(parsed.data, { apiKey, from, subject, claimSlot: claimFeedbackSlot });
+  if (result === "sent") await recordRedditEvent("AddonFeedbackSubmitted");
   return { success: result === "sent", message: text[result] };
 }

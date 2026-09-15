@@ -72,3 +72,98 @@ model WowImport {
   @@index([expiresAt])
   @@map("soulmate_wow_imports")
 }
+
+model FeedbackRateLimit {
+  key String @id @db.VarChar(64)
+  nextAllowedAt DateTime @map("next_allowed_at") @db.Timestamptz(3)
+
+  @@index([nextAllowedAt])
+  @@map("soulmate_feedback_rate_limits")
+}
+
+model User {
+  id String @id
+  name String
+  email String @unique
+  emailVerified Boolean @default(false)
+  image String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  bnetSubject String @unique
+  bnetBattleTag String?
+  bnetEmail String?
+  bnetEmailVerified Boolean?
+  bnetLastLoginAt String?
+  sessions Session[]
+  accounts Account[]
+
+  @@map("auth_users")
+}
+
+model Session {
+  id String @id
+  token String @unique
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+model Account {
+  id String @id
+  accountId String
+  providerId String
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken String?
+  refreshToken String?
+  idToken String?
+  accessTokenExpiresAt DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope String?
+  password String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("auth_accounts")
+}
+
+model Verification {
+  id String @id
+  identifier String
+  value String
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@index([expiresAt])
+  @@map("auth_verifications")
+}
+
+model RateLimit {
+  id String @id
+  key String @unique
+  count Int
+  lastRequest BigInt
+
+  @@map("auth_rate_limits")
+}
+
+model RequestRateLimit {
+  key String @id @db.VarChar(64)
+  count Int
+  expiresAt DateTime @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("soulmate_request_rate_limits")
+}

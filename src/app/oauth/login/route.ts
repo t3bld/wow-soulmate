@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import * as oidc from "openid-client";
-import { authClient, authSettings, loginTransaction } from "@/lib/auth";
+import { NextRequest } from "next/server";
+import { authSettings } from "@/lib/auth";
+import { handleAuth } from "@/lib/auth-handler";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { profileText } from "@/i18n/profile";
 
@@ -9,22 +9,24 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   const requestedLocale = request.nextUrl.searchParams.get("locale") ?? "";
   const locale = isLocale(requestedLocale) ? requestedLocale : defaultLocale;
+  if (request.headers.get("sec-fetch-site") === "cross-site") return new Response(null, { status: 403 });
   try {
-    const config = await authClient();
-    const transaction = await loginTransaction();
-    transaction.state = oidc.randomState();
-    transaction.nonce = oidc.randomNonce();
-    transaction.verifier = oidc.randomPKCECodeVerifier();
-    transaction.createdAt = Date.now();
-    transaction.locale = locale;
-    const url = oidc.buildAuthorizationUrl(config, {
-      scope: "openid wow.profile", redirect_uri: authSettings().redirectUri,
-      state: transaction.state, nonce: transaction.nonce,
-      code_challenge: await oidc.calculatePKCECodeChallenge(transaction.verifier), code_challenge_method: "S256",
-    });
-    await transaction.save();
-    return NextResponse.redirect(url, { headers: { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
+    const { origin } = authSettings();
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("Content-Type", "application/json");
+    requestHeaders.set("Origin", origin);
+    const result = await handleAuth(new Request(`${origin}/api/auth/sign-in/social`, {
+      method: "POST", headers: requestHeaders,
+      body: JSON.stringify({ provider: "battlenet", callbackURL: `${origin}/${locale}/soulmates`, errorCallbackURL: `${origin}/${locale}?auth=failed` }),
+    }));
+    if (!result.ok) return result;
+    const data = await result.json();
+    const destination = new URL(data.url);
+    if (destination.origin !== "https://oauth.battle.net") throw new Error("Unexpected provider");
+    const responseHeaders = new Headers({ Location: destination.href, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" });
+    for (const cookie of result.headers.getSetCookie()) responseHeaders.append("Set-Cookie", cookie);
+    return new Response(null, { status: 303, headers: responseHeaders });
   } catch {
-    return new NextResponse(profileText[locale].notReady, { status: 503, headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" } });
+    return new Response(profileText[locale].notReady, { status: 503, headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" } });
   }
 }

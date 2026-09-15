@@ -4,6 +4,8 @@ import { locales, isLocale, nativeLocaleNames } from "../i18n/config";
 import { chronicle, compatibilityText } from "../i18n/chronicle";
 import { legalText } from "../i18n/legal";
 import { addonText } from "../i18n/addon";
+import { conversionText, marketingText, metaPrivacyText } from "../i18n/marketing";
+import { securityText, sessionPrivacyText } from "../i18n/security";
 import { matchingText, profileOverviewText, profileText, questionnaireText, roleSelectionText } from "../i18n/profile";
 import { getDictionary } from "../i18n/get-dictionary";
 import { activities, classes, experiences } from "./profile";
@@ -25,8 +27,8 @@ function checkShape(reference: unknown, actual: unknown, path: string) {
   }
 }
 
-test("all European locales have complete active translations", () => {
-  assert.deepEqual(locales, ["en", "de", "fr", "es", "it", "pt", "ru"]);
+test("all supported locales have complete active translations", () => {
+  assert.deepEqual(locales, ["en", "de", "fr", "es", "it", "pt", "pt-BR", "pl", "ru"]);
   for (const locale of locales) {
     assert.equal(isLocale(locale), true);
     assert.ok(nativeLocaleNames[locale]);
@@ -40,6 +42,13 @@ test("all European locales have complete active translations", () => {
     checkShape(questionnaireText.en, questionnaireText[locale], `${locale}.questionnaire`);
     checkShape(legalText.en, legalText[locale], `${locale}.legal`);
     checkShape(addonText.en, addonText[locale], `${locale}.addon`);
+    checkShape(marketingText.en, marketingText[locale], `${locale}.marketing`);
+    checkShape(conversionText.en, conversionText[locale], `${locale}.conversions`);
+    checkShape(metaPrivacyText.en, metaPrivacyText[locale], `${locale}.metaPrivacy`);
+    assert.ok(legalText[locale].privacy.sections.some(section => section.body.includes(metaPrivacyText[locale].body)));
+    assert.ok(legalText[locale].privacy.sections[5].body.includes(conversionText[locale].privacy));
+    checkShape(securityText.en, securityText[locale], `${locale}.security`);
+    assert.ok(legalText[locale].privacy.sections[2].body.includes(sessionPrivacyText[locale]));
     checkShape(getDictionary("en").meta, getDictionary(locale).meta, `${locale}.meta`);
     checkShape(getDictionary("en").countdown, getDictionary(locale).countdown, `${locale}.countdown`);
     if (locale !== "en") {
@@ -83,6 +92,8 @@ test("profile wording follows the German and English baseline in every locale", 
     es: ["Tu perfil", "Alias público", "opcional", "Tus Soulmates"],
     it: ["Il tuo profilo", "Alias pubblico", "facoltativo", "I tuoi Soulmates"],
     pt: ["O teu perfil", "Nome público", "opcional", "Os teus Soulmates"],
+    "pt-BR": ["Seu perfil", "Nome público", "opcional", "Seus Soulmates"],
+    pl: ["Twój profil", "Publiczny pseudonim", "opcjonalnie", "Twoi Soulmates"],
     ru: ["Твой профиль", "Публичный псевдоним", "необязательно", "Твои Soulmates"],
   };
   for (const locale of locales) {
@@ -91,5 +102,22 @@ test("profile wording follows the German and English baseline in every locale", 
     assert.equal(profileText[locale].alias, alias, `${locale}.alias`);
     assert.ok(profileText[locale].about.endsWith(` (${optional})`), `${locale}.about`);
     assert.equal(matchingText[locale].heading, heading, `${locale}.heading`);
+  }
+});
+
+test("Brazilian Portuguese and Polish have distinct locale identifiers", () => {
+  for (const locale of ["pt-BR", "pl"]) {
+    assert.ok(isLocale(locale));
+    assert.equal(getDictionary(locale).countdown.locale, locale);
+  }
+});
+
+test("new locales translate landing, feedback and consent completely", () => {
+  for (const locale of ["pt-BR", "pl"] as const) {
+    for (const copy of [chronicle, compatibilityText, addonText, marketingText, profileText, questionnaireText]) {
+      checkShape(copy.en, copy[locale], locale);
+    }
+    assert.notEqual(chronicle[locale].subtitle, chronicle.en.subtitle);
+    assert.notEqual(marketingText[locale].accept, marketingText.en.accept);
   }
 });

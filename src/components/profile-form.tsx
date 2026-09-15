@@ -10,6 +10,7 @@ import { profileOverviewText, profileText, questionnaireText, roleSelectionText 
 import { locales, nativeLocaleNames, type Locale } from "@/i18n/config";
 import { ProfileAccountActions } from "./profile-account-actions";
 import { Button } from "./ui/button";
+import { redditEventSignal } from "@/lib/reddit-events";
 
 export function ProfileForm({ locale, profile }: { locale: Locale; profile: PlayerProfile | null }) {
   const router = useRouter();
@@ -118,7 +119,10 @@ function ProfileWizard({ locale, profile, onSaved, onCancel }: { locale: Locale;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [state, action, pending] = useActionState<SaveState, FormData>(async (previous, data) => {
     const result = await updateProfile(locale, previous, data);
-    if (result.success) onSaved(result.profile);
+    if (result.success) {
+      window.dispatchEvent(new Event(redditEventSignal));
+      onSaved(result.profile);
+    }
     return result;
   }, { message: "", success: false });
   const [playtimes, setPlaytimes] = useState(() => (profile ? profilePlaytimes(profile) : [{ days: [], startHour: 18, endHour: 22 }]).map((playtime, id) => ({ ...playtime, id })));

@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { z } from "zod";
 import { operator } from "../i18n/legal";
 
@@ -9,14 +9,16 @@ export const addonFeedbackSchema = z.object({
 
 export async function deliverAddonFeedback(
   input: z.infer<typeof addonFeedbackSchema>,
-  options: { apiKey: string; from: string; subject: string; now?: number },
+  options: { apiKey: string; from: string; subject: string; claimSlot: (key: string) => Promise<boolean>; now?: number },
   request: typeof fetch = fetch,
 ): Promise<"sent" | "limited" | "failed"> {
   const parsed = addonFeedbackSchema.safeParse(input);
   if (!parsed.success || !options.apiKey || !options.from) return "failed";
   const bucket = Math.floor((options.now ?? Date.now()) / 300_000);
-  const key = createHash("sha256").update(`addon:${options.subject}:${bucket}`).digest("hex");
+  const accountKey = createHmac("sha256", options.apiKey).update(`addon-account:${options.subject}`).digest("hex");
+  const key = createHmac("sha256", options.apiKey).update(`addon:${options.subject}:${bucket}`).digest("hex");
   try {
+    if (!await options.claimSlot(accountKey)) return "limited";
     const response = await request("https://api.resend.com/emails", {
       method: "POST",
       cache: "no-store",
