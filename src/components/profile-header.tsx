@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Download, Handshake, LogOut, UserRound } from "lucide-react";
+import { Handshake, LogOut, UserRound } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { matchingText, profileText } from "@/i18n/profile";
-import { addonText } from "@/i18n/addon";
 import { logout } from "@/app/[locale]/profile/actions";
 import { LocaleSwitcher } from "./locale-switcher";
 import { Button } from "./ui/button";
@@ -10,7 +9,6 @@ import { Button } from "./ui/button";
 export function ProfileHeader({ locale, active, hasProfile = true }: { locale: Locale; active: "soulmates" | "profile" | "addon"; hasProfile?: boolean }) {
   const links = [
     { page: "soulmates", label: matchingText[locale].title, icon: Handshake },
-    { page: "addon", label: addonText[locale].navigation, icon: Download },
     { page: "profile", label: matchingText[locale].profile, icon: UserRound },
   ];
   return <header className="profile-header section-width">
